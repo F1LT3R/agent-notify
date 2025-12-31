@@ -1,0 +1,22 @@
+{
+  "name": "agent-notify",
+  "version": "1.0.0",
+  "description": "agent notification system for macos including mcp",
+  "type": "module",
+  "scripts": {
+	"server": "node lib/server.mjs"
+  },
+  "bin": {
+    "notify": "./lib/notify.mjs",
+    "notify-mcp": "./lib/mcp.mjs"
+  },
+  "author": "F1LT3R",
+  "license": "SEE LICENSE.md",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "afplay": "^1.0.4",
+    "express": "^5.2.1",
+    "readline": "^1.3.0",
+    "say": "^0.16.0"
+  }
+}
