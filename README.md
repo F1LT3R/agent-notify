@@ -19,7 +19,7 @@ A macOS notification system designed for AI agents and developers, featuring aud
 | `error` | ❌ | Error occurred | Failed operations |
 | `question` | ❓ | Need user input | Waiting for decisions |
 | `permission` | 🔐 | Need authorization | Requiring user approval |
-| `status` | 📊 | Progress update | Ongoing operations |
+| `status` | 📡 | Progress update | Ongoing operations |
 | `waiting` | ⏳ | Processing | Long-running tasks |
 
 ## Installation
@@ -95,15 +95,33 @@ Examples:
 ## Ask Mode & Plan Mode
 
 Notifications not available in these modes.
-
+```
 
 ### HTTP API
 
 Start the notification server:
 
 ```bash
+# Default (listens on 0.0.0.0:8881 - accessible from network)
 npm run server
+
+# Cross-network access (recommended for SSH/remote projects)
+node lib/server.mjs --address 0.0.0.0:8881
+
+# Custom IP and port
+node lib/server.mjs --address 192.168.1.100:8881
+
+# Custom port only (uses 0.0.0.0 as host)
+node lib/server.mjs --address 9000
+
+# Localhost only (NOT accessible from other machines)
+node lib/server.mjs --address localhost:8881
 ```
+
+**Network Access:**
+- `0.0.0.0` - Accessible from any machine on your network (recommended)
+- `localhost/127.0.0.1` - Only accessible from the same machine
+- Specific IP - Only accessible via that network interface
 
 Send notifications via HTTP:
 
