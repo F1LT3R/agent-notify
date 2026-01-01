@@ -21,6 +21,7 @@ A macOS notification system designed for AI agents and developers, featuring aud
 | `permission` | 🔐 | Need authorization | Requiring user approval |
 | `status` | 📡 | Progress update | Ongoing operations |
 | `waiting` | ⏳ | Processing | Long-running tasks |
+| `review` | 👁️ | Code review needed | File changes ready |
 
 ## Installation
 
@@ -66,36 +67,20 @@ Add to your Cursor settings (`settings.json`):
 }
 ```
 
-Then use the following rules in your project's `.cursorrules` file, or add the rules globally in: `Settings > Rules & Commands > Add` to use across all projects.
+Then configure the notification rules:
 
-```markdown
-## MANDATORY: Agent Notification System
+**Option 1: Project-specific** - Copy the rules from [`.cursorrules`](.cursorrules) to your project's `.cursorrules` file
 
-Send notifications at pause points in Agent and Debug modes.
+**Option 2: Global** - Add the rules from [`.cursorrules`](.cursorrules) globally in: `Settings > Rules & Commands > Add` to use across all projects
 
-### Notification Types
-
-- "done" - Task completion
-- "question" - Need user input
-- "permission" - Need mode changes, or need user to allow command.
-- "error" - Errors blocking progress
-- "status" - Progress updates
-- "waiting" - Waiting for processes
-
-## Agent Mode & Debug Mode
-
-Use the `mcp_agent-notify_notify` MCP tool with type and message parameters.
-
-Examples:
-
-- type="done", message="Task completed"
-- type="question", message="Waiting for input"
-- type="error", message="Connection failed"
-
-## Ask Mode & Plan Mode
-
-Notifications not available in these modes.
-```
+The rules ensure notifications are sent at all pause points including:
+- Command approvals (`permission`)
+- Code reviews (`review`) 
+- Task completions (`done`)
+- Questions (`question`)
+- Errors (`error`)
+- Status updates (`status`)
+- Waiting periods (`waiting`)
 
 ### HTTP API
 

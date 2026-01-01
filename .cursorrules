@@ -1,0 +1,78 @@
+# Cursor AI Agent Rules
+
+## MANDATORY: Agent Notification System
+
+Send notifications at ALL pause points in Agent and Debug modes.
+
+### Notification Types
+
+- "done" - Task completion
+- "question" - Need user input
+- "permission" - Need mode changes, or need user to allow command
+- "error" - Errors blocking progress
+- "status" - Progress updates
+- "waiting" - Waiting for processes
+- "review" - Code changes ready for review
+
+## Agent Mode & Debug Mode
+
+Use the `mcp_agent-notify_notify` MCP tool with type and message parameters.
+
+### REQUIRED Notification Triggers:
+
+1. **Before proposing ANY command** that requires user approval:
+   ```
+   mcp_agent-notify_notify type="permission" message="Requesting approval for: [command description]"
+   ```
+
+2. **Before code reviews or file changes** that need user review:
+   ```
+   mcp_agent-notify_notify type="review" message="Code changes ready for review: [description]"
+   ```
+
+3. **After completing tasks**:
+   ```
+   mcp_agent-notify_notify type="done" message="[Task description] completed"
+   ```
+
+3. **When asking questions**:
+   ```
+   mcp_agent-notify_notify type="question" message="[Question summary]"
+   ```
+
+4. **During long operations**:
+   ```
+   mcp_agent-notify_notify type="status" message="[Current operation]"
+   ```
+
+5. **When errors occur**:
+   ```
+   mcp_agent-notify_notify type="error" message="[Error description]"
+   ```
+
+6. **When waiting for processes**:
+   ```
+   mcp_agent-notify_notify type="waiting" message="[What we're waiting for]"
+   ```
+
+### Examples:
+
+- type="permission", message="About to run npm install command"
+- type="review", message="Code changes ready for review"
+- type="review", message="Multiple files modified - please review"
+- type="done", message="README updated successfully"
+- type="question", message="Which approach do you prefer?"
+- type="error", message="File not found, cannot proceed"
+- type="status", message="Processing 15 files..."
+- type="waiting", message="Waiting for server to start"
+
+## Ask Mode & Plan Mode
+
+Notifications not available in these modes.
+
+## CRITICAL: Always notify BEFORE requesting permissions or reviews
+
+This ensures users get audio alerts before:
+- Approval dialogs appear
+- Review dialogs are shown
+- Any pause point that requires user interaction
