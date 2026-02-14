@@ -214,20 +214,20 @@ When running multiple Cursor windows and parallel agents, the notification syste
 
 Emoji-led format with notification type capitalized. Message displayed in dim text on its own line, followed by a blank line separator. Optional fields omitted when not provided:
 
-```
-Orchestrator (full):
+```shell
+# Orchestrator (full):
 ✅ DONE 📂 my-app 🤖 Orchestrator #0 🧠 claude-4.6-opus-high
 "All tasks complete"
 
-Subagent (full):
+# Subagent (full):
 ✅ DONE 📂 my-app 🤖 Coder #2 🧠 claude-4.6-sonnet
 "Build complete"
 
-Solo agent (with workspaceDir):
+# Solo agent (with workspaceDir):
 ✅ DONE 📂 my-app 🧠 claude-4.6-opus-high
 "Build complete"
 
-Solo agent (no workspaceDir):
+# Solo agent (no workspaceDir):
 ✅ DONE 🧠 claude-4.6-opus-high
 "Build complete"
 ```
