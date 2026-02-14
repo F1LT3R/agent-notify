@@ -8,7 +8,7 @@ A macOS notification system designed for AI agents and developers, featuring aud
 - 🗣️ **Text-to-Speech** - Vocalizes notification messages using macOS `say` command
 - 🎙️ **Multi-Agent Voice System** - Distinct TTS voices per agent role or number
 - 📂 **Project Identification** - Identifies which project/workspace a notification came from
-- 🎨 **Visual Feedback** - Clean console output with type-specific emojis and bracketed context
+- 🎨 **Visual Feedback** - Clean console output with emoji-led metadata and dim message text
 - 🔌 **MCP Integration** - Works seamlessly with Cursor AI and other MCP-compatible tools
 - ⌨️ **Keyboard Control** - Press any key to stop audio playback
 - 🌐 **HTTP API** - RESTful endpoint for external integrations
@@ -59,7 +59,7 @@ notify done "All tasks complete" --workspace-dir /Users/user/repos/my-app --agen
 notify done "Build complete" --workspace-dir /Users/user/repos/my-app --agent-role Coder --agent-number 2 --model claude-4-sonnet
 
 # Override TTS voice
-notify status "Processing..." --voice Daniel
+notify status "Processing..." --voice Nathan
 ```
 
 #### CLI Flags
@@ -103,8 +103,8 @@ mcp_agent-notify_notify({
   workspaceDir: "/Users/user/repos/my-app",   // Optional: Workspace Path from <user_info>
   agentRole: "Coder",                         // Optional: agent role name
   agentNumber: 2,                             // Optional: agent number (0 = orchestrator)
-  voice: "Daniel",                            // Optional: TTS voice override
-  model: "claude-4-sonnet"                    // Optional: model name (console log only)
+  voice: "Nathan",                            // Optional: TTS voice override
+  model: "claude-4-sonnet"                    // Required: model name (console log only)
 })
 ```
 
@@ -174,10 +174,10 @@ curl "http://localhost:8881/agent-notify?type=done&message=Build%20complete&work
 import { execSync } from 'child_process';
 
 // Basic notification
-execSync('notify done "Operation completed"');
+execSync('notify done "Operation completed" --model claude-4-opus');
 
 // With workspace context
-execSync('notify done "Build finished" --workspace-dir /Users/user/repos/my-app');
+execSync('notify done "Build finished" --workspace-dir /Users/user/repos/my-app --model claude-4-opus');
 ```
 
 ## Multi-Window & Multi-Agent Support
@@ -186,41 +186,41 @@ When running multiple Cursor windows and parallel agents, the notification syste
 
 ### Console Log Format
 
-Emoji-led format with notification type capitalized, message on its own indented line in default color. Optional fields omitted when not provided:
+Emoji-led format with notification type capitalized. Message displayed in dim text on its own line, followed by a blank line separator. Optional fields omitted when not provided:
 
 ```
 Orchestrator (full):
-✅ DONE 📂 my-app 🤖 #0 Orchestrator 🧠 claude-4-opus
-	"All tasks complete"
+✅ DONE 📂 my-app 🤖 Orchestrator #0 🧠 claude-4-opus
+"All tasks complete"
 
 Subagent (full):
-✅ DONE 📂 my-app 🤖 #2 Coder 🧠 claude-4-sonnet
-	"Build complete"
+✅ DONE 📂 my-app 🤖 Coder #2 🧠 claude-4-sonnet
+"Build complete"
 
 Solo agent (with workspaceDir):
 ✅ DONE 📂 my-app 🧠 claude-4-opus
-	"Build complete"
+"Build complete"
 
 Solo agent (no workspaceDir):
 ✅ DONE 🧠 claude-4-opus
-	"Build complete"
+"Build complete"
 ```
 
 ### TTS Spoken Order
 
-The notification sound and TTS speech run independently and in parallel. The sound fires immediately, and TTS begins after a 500ms delay. The spoken message is built from available parameters — parts are omitted when not provided:
+The notification sound and TTS speech run independently and in parallel. The sound fires immediately, and TTS begins after a 500ms delay. The spoken order matches the screen reading order — parts are omitted when not provided:
 
-1. **Project name** (from `workspaceDir` last segment — omitted if not provided)
-2. **Agent role** (if provided, e.g., "Coder")
-3. **Agent number** (if provided, e.g., "Agent 2" or "Agent Zero" for orchestrator)
-4. **Message type** (always included, e.g., "done", "question")
+1. **Message type** (always included, e.g., "done", "question")
+2. **Project name** (from `workspaceDir` last segment — omitted if not provided)
+3. **Agent role** (if provided, e.g., "Coder")
+4. **Agent number** (if provided, e.g., "Agent 2" or "Agent Zero" for orchestrator)
 5. **Message text** (always included)
 
 **Examples:**
-- `"my-app, Coder, Agent 2, done, Build complete"` — full context
-- `"my-app, done, Build complete"` — solo agent with workspaceDir
+- `"done, my-app, Coder, Agent 2, Build complete"` — full context
+- `"done, my-app, Build complete"` — solo agent with workspaceDir
 - `"done, Build complete"` — solo agent, no workspaceDir
-- `"Coder, Agent 2, done, Build complete"` — agent info but no workspaceDir
+- `"done, Coder, Agent 2, Build complete"` — agent info but no workspaceDir
 
 ### Agent Zero Convention
 
@@ -296,21 +296,21 @@ npm run server
 
 ```bash
 # Test basic notification
-notify done "Test complete"
+notify done "Test complete" --model claude-4-opus
 
 # Test with project context
-notify done "Test complete" --workspace-dir /Users/user/repos/test-project
+notify done "Test complete" --workspace-dir /Users/user/repos/test-project --model claude-4-opus
 
 # Test multi-agent
-notify done "Task finished" --workspace-dir /Users/user/repos/test-project --agent-role Coder --agent-number 1
+notify done "Task finished" --workspace-dir /Users/user/repos/test-project --agent-role Coder --agent-number 1 --model claude-4-sonnet
 
 # Test all notification types
-notify done "Test complete"
-notify error "Test error"
-notify question "Test question"
-notify permission "Test permission"
-notify status "Test status"
-notify waiting "Test waiting"
+notify done "Test complete" --model claude-4-opus
+notify error "Test error" --model claude-4-opus
+notify question "Test question" --model claude-4-opus
+notify permission "Test permission" --model claude-4-opus
+notify status "Test status" --model claude-4-opus
+notify waiting "Test waiting" --model claude-4-opus
 ```
 
 ## Requirements
