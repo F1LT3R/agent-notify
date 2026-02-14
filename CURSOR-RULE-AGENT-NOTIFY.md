@@ -1,4 +1,4 @@
-# Agent Notification System
+# Mandatory Agent Notification System
 
 Send notifications at **all pause points** in Agent and Debug modes.
 
