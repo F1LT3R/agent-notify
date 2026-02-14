@@ -28,8 +28,7 @@ Use the `mcp_agent-notify_notify` MCP tool with `type` and `message` (required),
 | `agentRole` | No | Role name assigned by orchestrator (e.g., "Coder", "Reviewer"). Orchestrator uses "Orchestrator" for itself. |
 | `agentNumber` | No | Agent number assigned by orchestrator. Orchestrator = 0, subagents = 1, 2, 3, etc. |
 | `voice` | No | Override the TTS voice (bypasses server voice maps) |
-| `role` | No | Task role for console logging only (e.g., "test-runner") |
-| `model` | No | Model identifier for console logging only (e.g., "fast", "opus") |
+| `model` | Yes | Your model identifier (e.g., "claude-4-opus", "gpt-4o") — shown in console log, not spoken |
 
 All fields beyond `type` and `message` are optional and gracefully degrade — the system works fine without them.
 
@@ -83,7 +82,9 @@ When orchestrating multiple subagents:
   - `agentRole="Coder"`, `agentNumber=1`
   - `agentRole="Reviewer"`, `agentNumber=2`
   - etc.
-- Pass `role` and `model` if known (e.g., `role="test-runner"`, `model="fast"`)
+- Pass `model` if known (e.g., `model="claude-4-opus"`)
+
+**IMPORTANT: The orchestrator is responsible for sending notifications on behalf of its subagents.** When a subagent completes a turn, the orchestrator should send a notification using that subagent's `agentRole` and `agentNumber`, so the user can hear which agent did what. Use the orchestrator's own identity (`agentRole="Orchestrator"`, `agentNumber=0`) only when reporting its own actions.
 
 ### Solo Agent Usage
 
@@ -105,8 +106,8 @@ mcp_agent-notify_notify type="done" message="Build complete" workspaceDir="/User
 
 ### Orchestrator Examples:
 
-- type="done", message="All tasks complete", workspaceDir="/Users/user/repos/my-app", agentRole="Orchestrator", agentNumber=0, role="coordinator", model="opus"
-- type="done", message="Build complete", workspaceDir="/Users/user/repos/my-app", agentRole="Coder", agentNumber=1, role="test-runner", model="fast"
+- type="done", message="All tasks complete", workspaceDir="/Users/user/repos/my-app", agentRole="Orchestrator", agentNumber=0, model="claude-4-opus"
+- type="done", message="Build complete", workspaceDir="/Users/user/repos/my-app", agentRole="Coder", agentNumber=1, model="claude-4-sonnet"
 
 ## Ask Mode & Plan Mode
 

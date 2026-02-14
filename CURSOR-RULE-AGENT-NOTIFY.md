@@ -51,8 +51,7 @@ user-agent-notify-notify type="status" message="<details>" workspaceDir="[Worksp
 | `agentRole`   | No       | Role name from orchestrator (e.g., "Coder"). Orchestrator uses "Orchestrator". |
 | `agentNumber` | No       | Agent number from orchestrator. Orchestrator = 0, subagents = 1, 2, 3, etc.  |
 | `voice`       | No       | Override TTS voice (bypasses server voice maps)                              |
-| `role`        | No       | Task role for console logging only (e.g., "test-runner")                     |
-| `model`       | No       | Model identifier for console logging only (e.g., "fast", "opus")             |
+| `model`       | Yes      | Your model identifier (e.g., "claude-4-opus", "gpt-4o") — shown in console log, not spoken |
 
 All fields beyond `type` and `message` are optional and gracefully degrade.
 
@@ -110,7 +109,9 @@ When orchestrating multiple subagents:
 
 - **Orchestrator** identifies itself as `agentRole="Orchestrator"`, `agentNumber=0`
 - **Subagents** are assigned roles and numbers starting from 1 (e.g., `agentRole="Coder"`, `agentNumber=1`)
-- Pass `role` and `model` if known
+- Pass `model` if known (e.g., `model="claude-4-opus"`)
+
+**IMPORTANT: The orchestrator is responsible for sending notifications on behalf of its subagents.** When a subagent completes a turn, the orchestrator should send a notification using that subagent's `agentRole` and `agentNumber`, so the user can hear which agent did what. Use the orchestrator's own identity (`agentRole="Orchestrator"`, `agentNumber=0`) only when reporting its own actions.
 
 Solo (non-orchestrated) agents only need `type`, `message`, and optionally `workspaceDir`.
 
@@ -131,8 +132,8 @@ type="waiting", message="Waiting for server to start", workspaceDir="/Users/user
 ### Orchestrator examples
 
 ```
-type="done", message="All tasks complete", workspaceDir="/Users/user/repos/my-app", agentRole="Orchestrator", agentNumber=0, role="coordinator", model="opus"
-type="done", message="Build complete", workspaceDir="/Users/user/repos/my-app", agentRole="Coder", agentNumber=1, role="test-runner", model="fast"
+type="done", message="All tasks complete", workspaceDir="/Users/user/repos/my-app", agentRole="Orchestrator", agentNumber=0, model="claude-4-opus"
+type="done", message="Build complete", workspaceDir="/Users/user/repos/my-app", agentRole="Coder", agentNumber=1, model="claude-4-sonnet"
 ```
 
 ## Mode Availability

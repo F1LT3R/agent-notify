@@ -56,7 +56,7 @@ notify done "Build complete" --workspace-dir /Users/user/repos/my-app
 notify done "All tasks complete" --workspace-dir /Users/user/repos/my-app --agent-role Orchestrator --agent-number 0
 
 # Subagent with full context
-notify done "Build complete" --workspace-dir /Users/user/repos/my-app --agent-role Coder --agent-number 2 --role test-runner --model fast
+notify done "Build complete" --workspace-dir /Users/user/repos/my-app --agent-role Coder --agent-number 2 --model claude-4-sonnet
 
 # Override TTS voice
 notify status "Processing..." --voice Daniel
@@ -72,8 +72,7 @@ notify status "Processing..." --voice Daniel
 | `--agent-role` | `agentRole` | Agent role name (e.g., "Coder", "Orchestrator") |
 | `--agent-number` | `agentNumber` | Agent number (Orchestrator = 0, subagents = 1, 2, 3...) |
 | `--voice` | `voice` | TTS voice override |
-| `--role` | `role` | Task role for console logging |
-| `--model` | `model` | Model identifier for console logging |
+| `--model` | `model` | Model identifier for console logging (e.g., "claude-4-opus") |
 
 ### MCP Integration (Cursor AI)
 
@@ -105,8 +104,7 @@ mcp_agent-notify_notify({
   agentRole: "Coder",                         // Optional: agent role name
   agentNumber: 2,                             // Optional: agent number (0 = orchestrator)
   voice: "Daniel",                            // Optional: TTS voice override
-  role: "test-runner",                        // Optional: task role (console log only)
-  model: "fast"                               // Optional: model name (console log only)
+  model: "claude-4-sonnet"                    // Optional: model name (console log only)
 })
 ```
 
@@ -120,8 +118,7 @@ mcp_agent-notify_notify({
 | `agentRole` | string | No | Agent role name assigned by orchestrator (e.g., "Coder", "Reviewer"). The orchestrator itself should use "Orchestrator". |
 | `agentNumber` | integer | No | Agent number assigned by orchestrator. Orchestrator = 0, subagents = 1, 2, 3, etc. |
 | `voice` | string | No | Override the TTS voice for this notification. If omitted, the server selects a voice based on agentRole or agentNumber. |
-| `role` | string | No | Specific task role for logging (e.g., "test-runner", "code-reviewer"). Console log only. |
-| `model` | string | No | Model identifier for logging (e.g., "fast", "opus"). Console log only. |
+| `model` | string | Yes | Your model identifier (e.g., "claude-4-opus", "gpt-4o"). Console log only. |
 
 ### HTTP API
 
@@ -156,7 +153,7 @@ Send notifications via HTTP:
 curl "http://localhost:8881/agent-notify?type=done&message=Hello%20World"
 
 # With project and agent context
-curl "http://localhost:8881/agent-notify?type=done&message=Build%20complete&workspaceDir=/Users/user/repos/my-app&agentRole=Coder&agentNumber=2&voice=Daniel&role=test-runner&model=fast"
+curl "http://localhost:8881/agent-notify?type=done&message=Build%20complete&workspaceDir=/Users/user/repos/my-app&agentRole=Coder&agentNumber=2&model=claude-4-sonnet"
 ```
 
 #### HTTP Query Parameters
@@ -169,8 +166,7 @@ curl "http://localhost:8881/agent-notify?type=done&message=Build%20complete&work
 | `agentRole` | No | Agent role name |
 | `agentNumber` | No | Agent number |
 | `voice` | No | TTS voice override |
-| `role` | No | Task role (console log only) |
-| `model` | No | Model identifier (console log only) |
+| `model` | Yes | Your model identifier (e.g., "claude-4-opus") |
 
 ### Programmatic Usage
 
@@ -190,23 +186,24 @@ When running multiple Cursor windows and parallel agents, the notification syste
 
 ### Console Log Format
 
-All provided fields are shown in brackets. Optional fields are omitted when not provided:
+Emoji-led format with notification type capitalized, message on its own indented line in default color. Optional fields omitted when not provided:
 
 ```
-Orchestrator speaking for itself:
-[my-app] [#0 Orchestrator] [coordinator] [opus] ✅ done: "All tasks complete"
+Orchestrator (full):
+✅ DONE 📂 my-app 🤖 #0 Orchestrator 🧠 claude-4-opus
+	"All tasks complete"
 
-Subagent via orchestrator (full):
-[my-app] [#2 Coder] [test-runner] [fast] ✅ done: "Build complete"
+Subagent (full):
+✅ DONE 📂 my-app 🤖 #2 Coder 🧠 claude-4-sonnet
+	"Build complete"
 
 Solo agent (with workspaceDir):
-[my-app] ✅ done: "Build complete"
+✅ DONE 📂 my-app 🧠 claude-4-opus
+	"Build complete"
 
 Solo agent (no workspaceDir):
-[unknown] ✅ done: "Build complete"
-
-Partial (agent but no role/model):
-[my-app] [#2 Coder] ✅ done: "Build complete"
+✅ DONE 🧠 claude-4-opus
+	"Build complete"
 ```
 
 ### TTS Spoken Order
@@ -246,15 +243,15 @@ The server selects a TTS voice using a triple fallback strategy:
 
 | Agent Role | Voice |
 |------------|-------|
-| Orchestrator | Alex (deep, authoritative) |
-| Coder | Daniel (British, technical) |
+| Orchestrator | System default |
+| Coder | Nathan (enhanced, natural) |
 | Reviewer | Samantha (clear, analytical) |
 | Tester | Karen (Australian, methodical) |
 
 | Agent Number | Voice |
 |--------------|-------|
-| 0 | Alex |
-| 1 | Daniel |
+| 0 | System default |
+| 1 | Nathan |
 | 2 | Samantha |
 | 3 | Karen |
 
