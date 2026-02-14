@@ -1,6 +1,32 @@
-# Agent Notify 🔔
+<p align="center">
+  <img src="logo.png" alt="Agent Notify" width="600">
+</p>
 
-A macOS notification system designed for AI agents and developers, featuring audio notifications, text-to-speech with distinct voices per agent, and MCP (Model Context Protocol) integration. Supports multi-window and multi-agent workflows with project identification and voice differentiation.
+<p align="center">
+  A macOS notification system designed for AI agents and developers, featuring audio notifications, text-to-speech with distinct voices per agent, and MCP (Model Context Protocol) integration. Supports multi-window and multi-agent workflows with project identification and voice differentiation.
+</p>
+
+## Table of Contents
+
+- [Features](#features)
+- [Notification Types](#notification-types)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Command Line Interface](#command-line-interface)
+  - [MCP Integration (Cursor AI)](#mcp-integration-cursor-ai)
+  - [HTTP API](#http-api)
+  - [Programmatic Usage](#programmatic-usage)
+- [Multi-Window & Multi-Agent Support](#multi-window--multi-agent-support)
+  - [Console Log Format](#console-log-format)
+  - [TTS Spoken Order](#tts-spoken-order)
+  - [Agent Zero Convention](#agent-zero-convention)
+- [Voice System](#voice-system)
+  - [Voice Maps](#voice-maps)
+- [Configuration](#configuration)
+- [Development](#development)
+- [Requirements](#requirements)
+- [License](#license)
+- [Author](#author)
 
 ## Features
 
