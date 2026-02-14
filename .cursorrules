@@ -28,7 +28,7 @@ Use the `mcp_agent-notify_notify` MCP tool with `type` and `message` (required),
 | `agentRole` | No | Role name assigned by orchestrator (e.g., "Coder", "Reviewer"). Orchestrator uses "Orchestrator" for itself. |
 | `agentNumber` | No | Agent number assigned by orchestrator. Orchestrator = 0, subagents = 1, 2, 3, etc. |
 | `voice` | No | Override the TTS voice (bypasses server voice maps) |
-| `model` | Yes | Your model identifier (e.g., "claude-4-opus", "gpt-4o") — shown in console log, not spoken |
+| `model` | Yes | Your exact model identifier as shown in system info (e.g., "claude-4.6-opus-high", "gpt-4o-2025-03"). Include version and variant. Shown in console log, not spoken. |
 
 All fields beyond `type` and `message` are optional and gracefully degrade — the system works fine without them.
 
@@ -82,7 +82,7 @@ When orchestrating multiple subagents:
   - `agentRole="Coder"`, `agentNumber=1`
   - `agentRole="Reviewer"`, `agentNumber=2`
   - etc.
-- Pass `model` if known (e.g., `model="claude-4-opus"`)
+- Pass `model` with your exact model identifier (e.g., `model="claude-4.6-opus-high"`)
 
 **IMPORTANT: The orchestrator is responsible for sending notifications on behalf of its subagents.** When a subagent completes a turn, the orchestrator should send a notification using that subagent's `agentRole` and `agentNumber`, so the user can hear which agent did what. Use the orchestrator's own identity (`agentRole="Orchestrator"`, `agentNumber=0`) only when reporting its own actions.
 
@@ -106,7 +106,7 @@ mcp_agent-notify_notify type="done" message="Build complete" workspaceDir="/User
 
 ### Orchestrator Examples:
 
-- type="done", message="All tasks complete", workspaceDir="/Users/user/repos/my-app", agentRole="Orchestrator", agentNumber=0, model="claude-4-opus"
+- type="done", message="All tasks complete", workspaceDir="/Users/user/repos/my-app", agentRole="Orchestrator", agentNumber=0, model="claude-4.6-opus-high"
 - type="done", message="Build complete", workspaceDir="/Users/user/repos/my-app", agentRole="Coder", agentNumber=1, model="claude-4-sonnet"
 
 ## Ask Mode & Plan Mode

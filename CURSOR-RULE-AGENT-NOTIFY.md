@@ -51,7 +51,7 @@ user-agent-notify-notify type="status" message="<details>" workspaceDir="[Worksp
 | `agentRole`   | No       | Role name from orchestrator (e.g., "Coder"). Orchestrator uses "Orchestrator". |
 | `agentNumber` | No       | Agent number from orchestrator. Orchestrator = 0, subagents = 1, 2, 3, etc.  |
 | `voice`       | No       | Override TTS voice (bypasses server voice maps)                              |
-| `model`       | Yes      | Your model identifier (e.g., "claude-4-opus", "gpt-4o") — shown in console log, not spoken |
+| `model`       | Yes      | Your exact model identifier as shown in system info (e.g., "claude-4.6-opus-high", "gpt-4o-2025-03"). Include version and variant. Shown in console log, not spoken. |
 
 All fields beyond `type` and `message` are optional and gracefully degrade.
 
@@ -109,7 +109,7 @@ When orchestrating multiple subagents:
 
 - **Orchestrator** identifies itself as `agentRole="Orchestrator"`, `agentNumber=0`
 - **Subagents** are assigned roles and numbers starting from 1 (e.g., `agentRole="Coder"`, `agentNumber=1`)
-- Pass `model` if known (e.g., `model="claude-4-opus"`)
+- Pass `model` with your exact model identifier (e.g., `model="claude-4.6-opus-high"`)
 
 **IMPORTANT: The orchestrator is responsible for sending notifications on behalf of its subagents.** When a subagent completes a turn, the orchestrator should send a notification using that subagent's `agentRole` and `agentNumber`, so the user can hear which agent did what. Use the orchestrator's own identity (`agentRole="Orchestrator"`, `agentNumber=0`) only when reporting its own actions.
 
@@ -132,7 +132,7 @@ type="waiting", message="Waiting for server to start", workspaceDir="/Users/user
 ### Orchestrator examples
 
 ```
-type="done", message="All tasks complete", workspaceDir="/Users/user/repos/my-app", agentRole="Orchestrator", agentNumber=0, model="claude-4-opus"
+type="done", message="All tasks complete", workspaceDir="/Users/user/repos/my-app", agentRole="Orchestrator", agentNumber=0, model="claude-4.6-opus-high"
 type="done", message="Build complete", workspaceDir="/Users/user/repos/my-app", agentRole="Coder", agentNumber=1, model="claude-4-sonnet"
 ```
 

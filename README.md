@@ -82,7 +82,7 @@ notify done "Build complete" --workspace-dir /Users/user/repos/my-app
 notify done "All tasks complete" --workspace-dir /Users/user/repos/my-app --agent-role Orchestrator --agent-number 0
 
 # Subagent with full context
-notify done "Build complete" --workspace-dir /Users/user/repos/my-app --agent-role Coder --agent-number 2 --model claude-4-sonnet
+notify done "Build complete" --workspace-dir /Users/user/repos/my-app --agent-role Coder --agent-number 2 --model claude-4.6-sonnet
 
 # Override TTS voice
 notify status "Processing..." --voice Nathan
@@ -98,7 +98,7 @@ notify status "Processing..." --voice Nathan
 | `--agent-role` | `agentRole` | Agent role name (e.g., "Coder", "Orchestrator") |
 | `--agent-number` | `agentNumber` | Agent number (Orchestrator = 0, subagents = 1, 2, 3...) |
 | `--voice` | `voice` | TTS voice override |
-| `--model` | `model` | Model identifier for console logging (e.g., "claude-4-opus") |
+| `--model` | `model` | Your exact model identifier (e.g., "claude-4.6-opus-high") |
 
 ### MCP Integration (Cursor AI)
 
@@ -130,7 +130,7 @@ mcp_agent-notify_notify({
   agentRole: "Coder",                         // Optional: agent role name
   agentNumber: 2,                             // Optional: agent number (0 = orchestrator)
   voice: "Nathan",                            // Optional: TTS voice override
-  model: "claude-4-sonnet"                    // Required: model name (console log only)
+  model: "claude-4.6-sonnet"                   // Required: exact model identifier (console log only)
 })
 ```
 
@@ -144,7 +144,7 @@ mcp_agent-notify_notify({
 | `agentRole` | string | No | Agent role name assigned by orchestrator (e.g., "Coder", "Reviewer"). The orchestrator itself should use "Orchestrator". |
 | `agentNumber` | integer | No | Agent number assigned by orchestrator. Orchestrator = 0, subagents = 1, 2, 3, etc. |
 | `voice` | string | No | Override the TTS voice for this notification. If omitted, the server selects a voice based on agentRole or agentNumber. |
-| `model` | string | Yes | Your model identifier (e.g., "claude-4-opus", "gpt-4o"). Console log only. |
+| `model` | string | Yes | Your exact model identifier as shown in system info (e.g., "claude-4.6-opus-high", "gpt-4o-2025-03"). Console log only. |
 
 ### HTTP API
 
@@ -179,7 +179,7 @@ Send notifications via HTTP:
 curl "http://localhost:8881/agent-notify?type=done&message=Hello%20World"
 
 # With project and agent context
-curl "http://localhost:8881/agent-notify?type=done&message=Build%20complete&workspaceDir=/Users/user/repos/my-app&agentRole=Coder&agentNumber=2&model=claude-4-sonnet"
+curl "http://localhost:8881/agent-notify?type=done&message=Build%20complete&workspaceDir=/Users/user/repos/my-app&agentRole=Coder&agentNumber=2&model=claude-4.6-sonnet"
 ```
 
 #### HTTP Query Parameters
@@ -192,7 +192,7 @@ curl "http://localhost:8881/agent-notify?type=done&message=Build%20complete&work
 | `agentRole` | No | Agent role name |
 | `agentNumber` | No | Agent number |
 | `voice` | No | TTS voice override |
-| `model` | Yes | Your model identifier (e.g., "claude-4-opus") |
+| `model` | Yes | Your exact model identifier (e.g., "claude-4.6-opus-high") |
 
 ### Programmatic Usage
 
@@ -200,10 +200,10 @@ curl "http://localhost:8881/agent-notify?type=done&message=Build%20complete&work
 import { execSync } from 'child_process';
 
 // Basic notification
-execSync('notify done "Operation completed" --model claude-4-opus');
+execSync('notify done "Operation completed" --model claude-4.6-opus-high');
 
 // With workspace context
-execSync('notify done "Build finished" --workspace-dir /Users/user/repos/my-app --model claude-4-opus');
+execSync('notify done "Build finished" --workspace-dir /Users/user/repos/my-app --model claude-4.6-opus-high');
 ```
 
 ## Multi-Window & Multi-Agent Support
@@ -216,19 +216,19 @@ Emoji-led format with notification type capitalized. Message displayed in dim te
 
 ```
 Orchestrator (full):
-✅ DONE 📂 my-app 🤖 Orchestrator #0 🧠 claude-4-opus
+✅ DONE 📂 my-app 🤖 Orchestrator #0 🧠 claude-4.6-opus-high
 "All tasks complete"
 
 Subagent (full):
-✅ DONE 📂 my-app 🤖 Coder #2 🧠 claude-4-sonnet
+✅ DONE 📂 my-app 🤖 Coder #2 🧠 claude-4.6-sonnet
 "Build complete"
 
 Solo agent (with workspaceDir):
-✅ DONE 📂 my-app 🧠 claude-4-opus
+✅ DONE 📂 my-app 🧠 claude-4.6-opus-high
 "Build complete"
 
 Solo agent (no workspaceDir):
-✅ DONE 🧠 claude-4-opus
+✅ DONE 🧠 claude-4.6-opus-high
 "Build complete"
 ```
 
@@ -322,21 +322,21 @@ npm run server
 
 ```bash
 # Test basic notification
-notify done "Test complete" --model claude-4-opus
+notify done "Test complete" --model claude-4.6-opus-high
 
 # Test with project context
-notify done "Test complete" --workspace-dir /Users/user/repos/test-project --model claude-4-opus
+notify done "Test complete" --workspace-dir /Users/user/repos/test-project --model claude-4.6-opus-high
 
 # Test multi-agent
-notify done "Task finished" --workspace-dir /Users/user/repos/test-project --agent-role Coder --agent-number 1 --model claude-4-sonnet
+notify done "Task finished" --workspace-dir /Users/user/repos/test-project --agent-role Coder --agent-number 1 --model claude-4.6-sonnet
 
 # Test all notification types
-notify done "Test complete" --model claude-4-opus
-notify error "Test error" --model claude-4-opus
-notify question "Test question" --model claude-4-opus
-notify permission "Test permission" --model claude-4-opus
-notify status "Test status" --model claude-4-opus
-notify waiting "Test waiting" --model claude-4-opus
+notify done "Test complete" --model claude-4.6-opus-high
+notify error "Test error" --model claude-4.6-opus-high
+notify question "Test question" --model claude-4.6-opus-high
+notify permission "Test permission" --model claude-4.6-opus-high
+notify status "Test status" --model claude-4.6-opus-high
+notify waiting "Test waiting" --model claude-4.6-opus-high
 ```
 
 ## Requirements
