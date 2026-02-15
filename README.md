@@ -6,35 +6,35 @@
   A macOS notification system designed for AI agents and applications, featuring audio notifications, text-to-speech with distinct voices per agent, a sequential notification queue, and MCP (Model Context Protocol) integration. Supports multi-window and multi-agent workflows with project identification and voice differentiation.
 </p>
 
-## Table of Contents
+## 📑 Table of Contents
 
-- [Features](#features)
-- [Architecture](#architecture)
-- [Notification Types](#notification-types)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [Command Line Interface](#command-line-interface)
-  - [MCP Integration (Cursor AI)](#mcp-integration-cursor-ai)
-  - [HTTP API](#http-api)
-  - [Programmatic Usage](#programmatic-usage)
-- [App Notifications](#app-notifications)
-  - [App Log Levels](#app-log-levels)
-  - [Log Level Configuration](#log-level-configuration)
-- [Notification Queue](#notification-queue)
-- [Multi-Window & Multi-Agent Support](#multi-window--multi-agent-support)
-  - [Console Log Format](#console-log-format)
-  - [TTS Spoken Order](#tts-spoken-order)
-  - [Agent Zero Convention](#agent-zero-convention)
-- [Voice System](#voice-system)
-  - [Voice Maps](#voice-maps)
-- [Keyboard Controls](#keyboard-controls)
-- [Configuration](#configuration)
-- [Development](#development)
-- [Requirements](#requirements)
-- [License](#license)
-- [Author](#author)
+- [✨ Features](#features)
+- [🏗️ Architecture](#architecture)
+- [🔔 Notification Types](#notification-types)
+- [📥 Installation](#installation)
+- [🚀 Usage](#usage)
+  - [💻 Command Line Interface](#command-line-interface)
+  - [🔌 MCP Integration (Cursor AI)](#mcp-integration-cursor-ai)
+  - [🌐 HTTP API](#http-api)
+  - [⚙️ Programmatic Usage](#programmatic-usage)
+- [📦 App Notifications](#app-notifications)
+  - [📊 App Log Levels](#app-log-levels)
+  - [🎚️ Log Level Configuration](#log-level-configuration)
+- [🔄 Notification Queue](#notification-queue)
+- [🪟 Multi-Window & Multi-Agent Support](#multi-window--multi-agent-support)
+  - [📋 Console Log Format](#console-log-format)
+  - [🗣️ TTS Spoken Order](#tts-spoken-order)
+  - [🤖 Agent Zero Convention](#agent-zero-convention)
+- [🎙️ Voice System](#voice-system)
+  - [🗺️ Voice Maps](#voice-maps)
+- [⌨️ Keyboard Controls](#keyboard-controls)
+- [⚙️ Configuration](#configuration)
+- [🛠️ Development](#development)
+- [📋 Requirements](#requirements)
+- [📄 License](#license)
+- [👤 Author](#author)
 
-## Features
+## ✨ Features
 
 - 🎵 **Audio Notifications** - Plays distinct sounds for different notification types
 - 🗣️ **Text-to-Speech** - Vocalizes notification messages using macOS `say` command
@@ -48,7 +48,7 @@
 - ⌨️ **Keyboard Control** - Spacebar to stop all, S to skip current
 - 🌐 **HTTP API** - RESTful endpoints for external integrations
 
-## Architecture
+## 🏗️ Architecture
 
 ```
 Agent (MCP)      ──▶  MCP tool "notify"  ──▶  HTTP /notify/agent  ──┐
@@ -64,9 +64,9 @@ App (HTTP/CLI)   ──▶  HTTP /notify/app  ───────────�
 - **One CLI** — `notify` command. If `--app` flag is present → `/notify/app`; otherwise → `/notify/agent`.
 - **One queue** — both endpoints feed into the same FIFO queue. Sequential playback, no overlap.
 
-## Notification Types
+## 🔔 Notification Types
 
-### Agent Types
+### 🤖 Agent Types
 
 | Type | Emoji | Description | Use Case |
 |------|-------|-------------|----------|
@@ -78,7 +78,7 @@ App (HTTP/CLI)   ──▶  HTTP /notify/app  ───────────�
 | `waiting` | ⏳ | Processing | Long-running tasks |
 | `review` | 👁️ | Code review needed | File changes ready |
 
-### App Log Levels
+### 📦 App Log Levels
 
 | Level | Emoji | Sound | Use Case |
 |-------|-------|-------|----------|
@@ -88,7 +88,7 @@ App (HTTP/CLI)   ──▶  HTTP /notify/app  ───────────�
 | `error` | ❌ | error.mp3 | Failures, crashes, critical issues |
 | `success` | ✅ | done.mp3 | Build complete, tests passed, deploy finished |
 
-## Installation
+## 📥 Installation
 
 ```bash
 # Clone the repository
@@ -102,9 +102,9 @@ npm install -g
 npm link
 ```
 
-## Usage
+## 🚀 Usage
 
-### Command Line Interface
+### 💻 Command Line Interface
 
 ```bash
 # Agent notification (type and message only)
@@ -131,7 +131,7 @@ notify info "Starting deploy..." --app deploy
 notify debug "Cache hit ratio 95%" --app webpack
 ```
 
-#### CLI Flags
+#### 🏁 CLI Flags
 
 | Flag | HTTP Query Param | Description |
 |------|-----------------|-------------|
@@ -144,7 +144,7 @@ notify debug "Cache hit ratio 95%" --app webpack
 | `--model` | `model` | Your exact model identifier (e.g., "claude-4.6-opus-high") (agent notifications only) |
 | `--app` | `app` | App name — routes to `/notify/app` endpoint |
 
-### MCP Integration (Cursor AI)
+### 🔌 MCP Integration (Cursor AI)
 
 Add to your Cursor settings (`settings.json`):
 
@@ -164,7 +164,7 @@ Then configure the notification rules:
 
 **Option 2: Global** - Add the rules from [`.cursorrules`](.cursorrules) globally in: `Settings > Rules & Commands > Add` to use across all projects
 
-#### MCP Tool Schema
+#### 📝 MCP Tool Schema
 
 ```javascript
 mcp_agent-notify_notify({
@@ -180,7 +180,7 @@ mcp_agent-notify_notify({
 
 **Note:** The MCP tool is exclusively for agents. App notifications should use the CLI (`--app` flag) or HTTP API (`/notify/app`) directly.
 
-#### MCP Parameter Descriptions
+#### 📋 MCP Parameter Descriptions
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -192,7 +192,7 @@ mcp_agent-notify_notify({
 | `voice` | string | No | Override the TTS voice for this notification. If omitted, the server selects a voice based on agentRole or agentNumber. |
 | `model` | string | Yes | Your exact model identifier as shown in system info (e.g., "claude-4.6-opus-high", "gpt-4o-2025-03"). Console log only. |
 
-### HTTP API
+### 🌐 HTTP API
 
 Start the notification server:
 
@@ -216,10 +216,10 @@ node lib/server.mjs --address 9000
 node lib/server.mjs --address localhost:8881
 ```
 
-**Network Access:**
-- `0.0.0.0` - Accessible from any machine on your network (recommended)
-- `localhost/127.0.0.1` - Only accessible from the same machine
-- Specific IP - Only accessible via that network interface
+**🌍 Network Access:**
+- `0.0.0.0` - 🌐 Accessible from any machine on your network (recommended)
+- `localhost/127.0.0.1` - 🏠 Only accessible from the same machine
+- Specific IP - 🎯 Only accessible via that network interface
 
 Send notifications via HTTP:
 
@@ -237,7 +237,7 @@ curl "http://localhost:8881/notify/app?type=success&message=Build%20complete&app
 curl "http://localhost:8881/notify/app?type=debug&message=Cache%20hit%20ratio%2095%25&app=webpack"
 ```
 
-#### `/notify/agent` Parameters
+#### 🤖 `/notify/agent` Parameters
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
@@ -249,7 +249,7 @@ curl "http://localhost:8881/notify/app?type=debug&message=Cache%20hit%20ratio%20
 | `agentNumber` | No | Agent number |
 | `voice` | No | TTS voice override |
 
-#### `/notify/app` Parameters
+#### 📦 `/notify/app` Parameters
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
@@ -258,7 +258,7 @@ curl "http://localhost:8881/notify/app?type=debug&message=Cache%20hit%20ratio%20
 | `app` | Yes | App name (e.g., "webpack", "jest", "github-actions") |
 | `voice` | No | TTS voice override |
 
-### Programmatic Usage
+### ⚙️ Programmatic Usage
 
 ```javascript
 import { execSync } from 'child_process';
@@ -273,11 +273,11 @@ execSync('notify done "Build finished" --workspace-dir /Users/user/repos/my-app 
 execSync('notify success "Build complete" --app webpack');
 ```
 
-## App Notifications
+## 📦 App Notifications
 
 App notifications allow build tools, CI scripts, deploy pipelines, test runners, and any other application to fire notifications alongside agent notifications.
 
-### App Log Levels
+### 📊 App Log Levels
 
 Apps use logger-style levels instead of agent notification types:
 
@@ -291,7 +291,7 @@ Apps use logger-style levels instead of agent notification types:
 
 **Hierarchy (lowest to highest):** `debug < info < warn < error < success`
 
-### Log Level Configuration
+### 🎚️ Log Level Configuration
 
 Two server flags control what app notifications are shown and heard:
 
@@ -300,7 +300,7 @@ Two server flags control what app notifications are shown and heard:
 | `--log-level` | `info` | Minimum level to show in console. Below this, the notification is completely ignored. |
 | `--log-level-audio` | `info` | Minimum level to play sound + TTS. Below this, the notification is logged to console only (no audio, no queue entry). |
 
-**Examples:**
+**💡 Examples:**
 
 ```bash
 # Default: see and hear everything except debug
@@ -316,11 +316,11 @@ node lib/server.mjs --log-level debug --log-level-audio debug
 node lib/server.mjs --log-level error --log-level-audio error
 ```
 
-**Important:** Log level flags apply to app notifications only. Agent notifications always play audio and log to console regardless of these settings.
+**⚠️ Important:** Log level flags apply to app notifications only. Agent notifications always play audio and log to console regardless of these settings.
 
-### Example Integrations
+### 🔗 Example Integrations
 
-#### npm scripts (package.json)
+#### 📦 npm scripts (package.json)
 
 ```json
 {
@@ -333,7 +333,7 @@ node lib/server.mjs --log-level error --log-level-audio error
 }
 ```
 
-#### Shell script
+#### 🐚 Shell script
 
 ```bash
 #!/bin/bash
@@ -346,7 +346,7 @@ else
 fi
 ```
 
-#### curl (HTTP)
+#### 🌐 curl (HTTP)
 
 ```bash
 # App notification
@@ -356,24 +356,24 @@ curl "http://localhost:8881/notify/app?type=success&message=Pipeline%20complete&
 curl "http://localhost:8881/notify/agent?type=done&message=Build%20complete&model=claude-4.6-opus-high"
 ```
 
-## Notification Queue
+## 🔄 Notification Queue
 
 When multiple notifications arrive simultaneously (from parallel agents, apps, or a mix), a server-side FIFO queue ensures they play sequentially — one at a time, never overlapping. All callers receive an immediate response.
 
-### Queue Behavior
+### ⚙️ Queue Behavior
 
 1. **Every notification is queued** — when a request arrives, it's added to the end of the queue
 2. **Sequential playback** — only one notification plays at a time (sound + TTS). The next one starts only after the previous one completes
 3. **Immediate response** — the server always responds immediately with `{ success: true, queued: true, position: N }`
 4. **Log level filtering** — app notifications below the `--log-level-audio` threshold are logged to console but not enqueued (no audio)
 
-## Multi-Window & Multi-Agent Support
+## 🪟 Multi-Window & Multi-Agent Support
 
 When running multiple Cursor windows and parallel agents, the notification system identifies the source of each notification through project name, agent role, and agent number.
 
-### Console Log Format
+### 📋 Console Log Format
 
-#### Agent Notifications
+#### 🤖 Agent Notifications
 
 Emoji-led format with notification type capitalized. Message displayed in dim text on its own line, followed by a blank line separator. Optional fields omitted when not provided:
 
@@ -395,7 +395,7 @@ Emoji-led format with notification type capitalized. Message displayed in dim te
 "Build complete"
 ```
 
-#### App Notifications
+#### 📦 App Notifications
 
 ```shell
 ✅ SUCCESS 📦 webpack
@@ -419,11 +419,11 @@ Emoji-led format with notification type capitalized. Message displayed in dim te
 - No project folder (workspaceDir not supported for apps)
 - `app` name shown where agent role would be
 
-### TTS Spoken Order
+### 🗣️ TTS Spoken Order
 
 The notification sound and TTS speech run independently and in parallel. The sound fires immediately, and TTS begins after a 500ms delay. The spoken order matches the screen reading order — parts are omitted when not provided:
 
-#### Agent Spoken Order
+#### 🤖 Agent Spoken Order
 
 1. **Message type** (always included, e.g., "done", "question")
 2. **Project name** (from `workspaceDir` last segment — omitted if not provided)
@@ -436,7 +436,7 @@ The notification sound and TTS speech run independently and in parallel. The sou
 - `"done, my-app, Build complete"` — solo agent with workspaceDir
 - `"done, Build complete"` — solo agent, no workspaceDir
 
-#### App Spoken Order
+#### 📦 App Spoken Order
 
 1. **Log level** (e.g., "success", "error")
 2. **App name** (e.g., "webpack")
@@ -446,7 +446,7 @@ The notification sound and TTS speech run independently and in parallel. The sou
 - `"success, webpack, Build complete in 4.2 seconds"`
 - `"error, jest, 3 tests failed"`
 
-### Agent Zero Convention
+### 🤖 Agent Zero Convention
 
 When using an orchestrator with multiple subagents:
 
@@ -454,7 +454,7 @@ When using an orchestrator with multiple subagents:
 - **Subagent 1** = `agentRole="Coder"`, `agentNumber=1` → spoken as "Coder, Agent 1"
 - **Subagent 2** = `agentRole="Reviewer"`, `agentNumber=2` → spoken as "Reviewer, Agent 2"
 
-## Voice System
+## 🎙️ Voice System
 
 The server selects a TTS voice using a triple fallback strategy:
 
@@ -463,7 +463,7 @@ The server selects a TTS voice using a triple fallback strategy:
 3. **Index-based map** — If `agentNumber` matches an index in the map, use that voice
 4. **System default** — Use macOS default voice
 
-### Voice Maps
+### 🗺️ Voice Maps
 
 | Agent Role | Voice |
 |------------|-------|
@@ -503,7 +503,7 @@ Voice maps are configured server-side in `lib/server.mjs` for centralized manage
 
 App notifications use the `voice` parameter if provided, otherwise the system default.
 
-## Keyboard Controls
+## ⌨️ Keyboard Controls
 
 | Key | Action |
 |-----|--------|
@@ -511,20 +511,20 @@ App notifications use the `voice` parameter if provided, otherwise the system de
 | **S** | Skip current notification, move to the next one in the queue |
 | **Ctrl+C** | Exit the server |
 
-## Configuration
+## ⚙️ Configuration
 
 The system uses predefined sound files located in the `sounds/` directory:
 
-- `done.mp3` - Success sound (also used for app `success`)
-- `error.mp3` - Error alert (also used for app `error`)
-- `question.mp3` - Question prompt
-- `permission.mp3` - Authorization request
-- `status.mp3` - Status update (also used for app `info`)
-- `waiting.mp3` - Processing sound (also used for app `warn`)
+- 🎵 `done.mp3` - Success sound (also used for app `success`)
+- 🔔 `error.mp3` - Error alert (also used for app `error`)
+- ❓ `question.mp3` - Question prompt
+- 🔐 `permission.mp3` - Authorization request
+- 📡 `status.mp3` - Status update (also used for app `info`)
+- ⏳ `waiting.mp3` - Processing sound (also used for app `warn`)
 
-## Development
+## 🛠️ Development
 
-### Project Structure
+### 📁 Project Structure
 
 ```
 agent-notify/
@@ -537,7 +537,7 @@ agent-notify/
 └── README.md
 ```
 
-### Running the Server
+### 🚀 Running the Server
 
 ```bash
 # Start the notification server (default settings)
@@ -549,7 +549,7 @@ npm run server
 node lib/server.mjs --log-level debug --log-level-audio warn
 ```
 
-### Testing
+### 🧪 Testing
 
 ```bash
 # Test agent notification
@@ -581,16 +581,16 @@ curl "http://localhost:8881/notify/agent?type=done&message=Test&model=test"
 curl "http://localhost:8881/notify/app?type=success&message=Test&app=test"
 ```
 
-## Requirements
+## 📋 Requirements
 
-- macOS (uses `afplay` and `say` commands)
-- Node.js 18+
-- Audio output capability
+- 🍎 macOS (uses `afplay` and `say` commands)
+- 🟢 Node.js 18+
+- 🔊 Audio output capability
 
-## License
+## 📄 License
 
 See LICENSE.md for details.
 
-## Author
+## 👤 Author
 
 F1LT3R
