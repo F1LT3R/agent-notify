@@ -126,7 +126,7 @@ notify status "Processing..." --voice Nathan
 
 # App notification
 notify success "Build complete" --app webpack
-notify error "3 tests failed" --app jest --workspace-dir /Users/user/repos/my-app
+notify error "3 tests failed" --app jest
 notify info "Starting deploy..." --app deploy
 notify debug "Cache hit ratio 95%" --app webpack
 ```
@@ -137,11 +137,11 @@ notify debug "Cache hit ratio 95%" --app webpack
 |------|-----------------|-------------|
 | *(positional 1)* | `type` | Notification type or app log level (required) |
 | *(positional 2)* | `message` | Message text (required) |
-| `--workspace-dir` | `workspaceDir` | Full workspace path — project name derived from last segment |
-| `--agent-role` | `agentRole` | Agent role name (e.g., "Coder", "Orchestrator") |
-| `--agent-number` | `agentNumber` | Agent number (Orchestrator = 0, subagents = 1, 2, 3...) |
+| `--workspace-dir` | `workspaceDir` | Full workspace path — project name derived from last segment (agent notifications only) |
+| `--agent-role` | `agentRole` | Agent role name (e.g., "Coder", "Orchestrator") (agent notifications only) |
+| `--agent-number` | `agentNumber` | Agent number (Orchestrator = 0, subagents = 1, 2, 3...) (agent notifications only) |
 | `--voice` | `voice` | TTS voice override |
-| `--model` | `model` | Your exact model identifier (e.g., "claude-4.6-opus-high") |
+| `--model` | `model` | Your exact model identifier (e.g., "claude-4.6-opus-high") (agent notifications only) |
 | `--app` | `app` | App name — routes to `/notify/app` endpoint |
 
 ### MCP Integration (Cursor AI)
@@ -231,7 +231,7 @@ curl "http://localhost:8881/notify/agent?type=done&message=Build%20complete&mode
 curl "http://localhost:8881/notify/agent?type=done&message=Build%20complete&workspaceDir=/Users/user/repos/my-app&agentRole=Coder&agentNumber=2&model=claude-4.6-sonnet"
 
 # App notification
-curl "http://localhost:8881/notify/app?type=success&message=Build%20complete&app=webpack&workspaceDir=/Users/user/repos/my-app"
+curl "http://localhost:8881/notify/app?type=success&message=Build%20complete&app=webpack"
 
 # App debug (only shown if --log-level allows it)
 curl "http://localhost:8881/notify/app?type=debug&message=Cache%20hit%20ratio%2095%25&app=webpack"
@@ -256,7 +256,6 @@ curl "http://localhost:8881/notify/app?type=debug&message=Cache%20hit%20ratio%20
 | `type` | Yes | Log level (debug, info, warn, error, success) |
 | `message` | Yes | Message text |
 | `app` | Yes | App name (e.g., "webpack", "jest", "github-actions") |
-| `workspaceDir` | No | Full workspace path (project name derived from last segment) |
 | `voice` | No | TTS voice override |
 
 ### Programmatic Usage
@@ -338,12 +337,12 @@ node lib/server.mjs --log-level error --log-level-audio error
 
 ```bash
 #!/bin/bash
-notify info "Starting deploy..." --app deploy --workspace-dir "$(pwd)"
+notify info "Starting deploy..." --app deploy
 npm run build
 if [ $? -eq 0 ]; then
-  notify success "Deploy successful" --app deploy --workspace-dir "$(pwd)"
+  notify success "Deploy successful" --app deploy
 else
-  notify error "Deploy failed" --app deploy --workspace-dir "$(pwd)"
+  notify error "Deploy failed" --app deploy
 fi
 ```
 
@@ -417,7 +416,7 @@ Emoji-led format with notification type capitalized. Message displayed in dim te
 
 - `📦` emoji for app source (vs `🤖` for agents)
 - No model field (apps don't have models)
-- No project folder shown (workspaceDir still used for TTS, just not displayed)
+- No project folder (workspaceDir not supported for apps)
 - `app` name shown where agent role would be
 
 ### TTS Spoken Order
@@ -440,13 +439,12 @@ The notification sound and TTS speech run independently and in parallel. The sou
 #### App Spoken Order
 
 1. **Log level** (e.g., "success", "error")
-2. **Project name** (from `workspaceDir` — omitted if not provided)
-3. **App name** (e.g., "webpack")
-4. **Message text**
+2. **App name** (e.g., "webpack")
+3. **Message text**
 
 **Examples:**
-- `"success, my-app, webpack, Build complete in 4.2 seconds"` — full context
-- `"error, jest, 3 tests failed"` — no workspaceDir
+- `"success, webpack, Build complete in 4.2 seconds"`
+- `"error, jest, 3 tests failed"`
 
 ### Agent Zero Convention
 
@@ -565,7 +563,7 @@ notify done "Task finished" --workspace-dir /Users/user/repos/test-project --age
 
 # Test app notification
 notify success "Build complete" --app webpack
-notify error "Tests failed" --app jest --workspace-dir /Users/user/repos/test-project
+notify error "Tests failed" --app jest
 notify info "Deploying..." --app deploy
 notify warn "Deprecation warning" --app eslint
 notify debug "Verbose output" --app webpack
