@@ -113,6 +113,27 @@ When orchestrating multiple subagents:
 
 **IMPORTANT: The orchestrator is responsible for sending notifications on behalf of its subagents.** When a subagent completes a turn, the orchestrator should send a notification using that subagent's `agentRole` and `agentNumber`, so the user can hear which agent did what. Use the orchestrator's own identity (`agentRole="Orchestrator"`, `agentNumber=0`) only when reporting its own actions.
 
+### Available Agent Roles
+
+The following agent roles are available with distinct TTS voices. Orchestrators should assign these roles to subagents based on their responsibilities:
+
+| Role | Description | Voice |
+|------|-------------|-------|
+| **Orchestrator** | Coordinates subagents, delegates tasks | System default |
+| **Coder** | Writes implementation code | Nathan |
+| **Reviewer** | Reviews code for quality, bugs, patterns | Samantha |
+| **Tester** | Writes and runs tests | Karen |
+| **Designer** | UI/UX design, styling, layout | Zoe |
+| **Researcher** | Explores codebases, reads docs, gathers context | Serena |
+| **Debugger** | Investigates bugs, traces errors | Lee |
+| **DevOps** | CI/CD, deployment, infrastructure | Evan |
+| **Writer** | Documentation, READMEs, comments | Matilda |
+| **Planner** | Architecture, task breakdown, planning | Catherine |
+| **Security** | Audits, vulnerability checks | Ava |
+| **Refactorer** | Code cleanup, optimization, restructuring | Siri 1 |
+| **Analyst** | Data analysis, performance profiling | Siri 2 |
+| **Migrator** | Upgrades, migrations, version bumps | Siri 3 |
+
 Solo (non-orchestrated) agents only need `type`, `message`, and optionally `workspaceDir`.
 
 ## Examples

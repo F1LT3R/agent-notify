@@ -399,13 +399,13 @@ Emoji-led format with notification type capitalized. Message displayed in dim te
 #### App Notifications
 
 ```shell
-✅ SUCCESS 📂 my-app 📦 webpack
+✅ SUCCESS 📦 webpack
 "Build complete in 4.2s"
 
 ❌ ERROR 📦 jest
 "3 tests failed in auth.test.ts"
 
-ℹ️ INFO 📂 my-app 📦 deploy
+ℹ️ INFO 📦 deploy
 "Starting deployment to staging"
 
 ⚠️ WARN 📦 eslint
@@ -417,6 +417,7 @@ Emoji-led format with notification type capitalized. Message displayed in dim te
 
 - `📦` emoji for app source (vs `🤖` for agents)
 - No model field (apps don't have models)
+- No project folder shown (workspaceDir still used for TTS, just not displayed)
 - `app` name shown where agent role would be
 
 ### TTS Spoken Order
@@ -472,6 +473,16 @@ The server selects a TTS voice using a triple fallback strategy:
 | Coder | Nathan (enhanced, natural) |
 | Reviewer | Samantha (clear, analytical) |
 | Tester | Karen (Australian, methodical) |
+| Designer | Zoe (bright, creative) |
+| Researcher | Serena (calm, thoughtful) |
+| Debugger | Lee (focused, precise) |
+| DevOps | Evan (confident, reliable) |
+| Writer | Matilda (articulate, clear) |
+| Planner | Catherine (organized, strategic) |
+| Security | Ava (alert, vigilant) |
+| Refactorer | Siri 1 (systematic, efficient) |
+| Analyst | Siri 2 (analytical, detailed) |
+| Migrator | Siri 3 (methodical, careful) |
 
 | Agent Number | Voice |
 |--------------|-------|
@@ -479,6 +490,16 @@ The server selects a TTS voice using a triple fallback strategy:
 | 1 | Nathan |
 | 2 | Samantha |
 | 3 | Karen |
+| 4 | Zoe |
+| 5 | Serena |
+| 6 | Lee |
+| 7 | Evan |
+| 8 | Matilda |
+| 9 | Catherine |
+| 10 | Ava |
+| 11 | Siri 1 |
+| 12 | Siri 2 |
+| 13 | Siri 3 |
 
 Voice maps are configured server-side in `lib/server.mjs` for centralized management.
 
