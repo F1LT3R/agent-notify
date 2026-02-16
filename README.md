@@ -501,7 +501,7 @@ The server selects a TTS voice using a triple fallback strategy:
 
 Voice maps are configured server-side in `lib/server.mjs` for centralized management.
 
-App notifications use the `voice` parameter if provided, otherwise the system default.
+App notifications use **Evan** (confident, reliable) as the default voice to distinguish them from agent notifications. This can be overridden with the `voice` parameter.
 
 ## ⌨️ Keyboard Controls
 
