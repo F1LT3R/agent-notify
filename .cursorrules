@@ -90,22 +90,22 @@ When orchestrating multiple subagents:
 
 The following agent roles are available with distinct TTS voices. Orchestrators should assign these roles to subagents based on their responsibilities:
 
-| Role | Description | Voice |
-|------|-------------|-------|
-| **Orchestrator** | Coordinates subagents, delegates tasks | System default |
-| **Coder** | Writes implementation code | Nathan |
-| **Reviewer** | Reviews code for quality, bugs, patterns | Samantha |
-| **Tester** | Writes and runs tests | Karen |
-| **Designer** | UI/UX design, styling, layout | Zoe |
-| **Researcher** | Explores codebases, reads docs, gathers context | Serena |
-| **Debugger** | Investigates bugs, traces errors | Lee |
-| **DevOps** | CI/CD, deployment, infrastructure | Evan |
-| **Writer** | Documentation, READMEs, comments | Matilda |
-| **Planner** | Architecture, task breakdown, planning | Catherine |
-| **Security** | Audits, vulnerability checks | Ava |
-| **Refactorer** | Code cleanup, optimization, restructuring | Siri 1 |
-| **Analyst** | Data analysis, performance profiling | Siri 2 |
-| **Migrator** | Upgrades, migrations, version bumps | Siri 3 |
+| Role | Description | Voice | Region |
+|------|-------------|-------|--------|
+| **Orchestrator** | Coordinates subagents, delegates tasks | System default | - |
+| **Coder** | Writes implementation code | Nathan | America |
+| **Reviewer** | Reviews code for quality, bugs, patterns | Samantha | America |
+| **Tester** | Writes and runs tests | Karen | Australia |
+| **Designer** | UI/UX design, styling, layout | Zoe | America |
+| **Researcher** | Explores codebases, reads docs, gathers context | Serena | America |
+| **Debugger** | Investigates bugs, traces errors | Lee | America |
+| **DevOps** | CI/CD, deployment, infrastructure | Evan | America |
+| **Writer** | Documentation, READMEs, comments | Matilda | America |
+| **Planner** | Architecture, task breakdown, planning | Catherine | Australia |
+| **Security** | Audits, vulnerability checks | Ava | America |
+| **Refactorer** | Code cleanup, optimization, restructuring | Siri 1 | America |
+| **Analyst** | Data analysis, performance profiling | Siri 2 | America |
+| **Migrator** | Upgrades, migrations, version bumps | Siri 3 | America |
 
 ### Solo Agent Usage
 

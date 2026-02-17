@@ -12,6 +12,9 @@
 - [🏗️ Architecture](#architecture)
 - [🔔 Notification Types](#notification-types)
 - [📥 Installation](#installation)
+- [⚙️ Configuration](#configuration)
+  - [🌐 Server Connection URL](#server-connection-url)
+  - [🔗 Notification Links (App Only)](#notification-links-app-only)
 - [🚀 Usage](#usage)
   - [💻 Command Line Interface](#command-line-interface)
   - [🔌 MCP Integration (Cursor AI)](#mcp-integration-cursor-ai)
@@ -28,7 +31,7 @@
 - [🎙️ Voice System](#voice-system)
   - [🗺️ Voice Maps](#voice-maps)
 - [⌨️ Keyboard Controls](#keyboard-controls)
-- [⚙️ Configuration](#configuration)
+- [🎵 Sound Files](#sound-files)
 - [🛠️ Development](#development)
 - [📋 Requirements](#requirements)
 - [📄 License](#license)
@@ -102,6 +105,101 @@ npm install -g
 npm link
 ```
 
+## ⚙️ Configuration
+
+### 🌐 Server Connection URL
+
+By default, the notification clients (CLI and MCP) connect to `http://localhost:8881`. To use a different server address, set the `AGENT_NOTIFY_URL` environment variable.
+
+#### For CLI Usage
+
+```bash
+# Set for current shell session
+export AGENT_NOTIFY_URL="http://192.168.0.6:8881"
+notify done "Task complete"
+
+# Set for single command
+AGENT_NOTIFY_URL="http://192.168.0.6:8881" notify done "Task complete"
+
+# Add to ~/.bashrc or ~/.zshrc for persistence
+echo 'export AGENT_NOTIFY_URL="http://192.168.0.6:8881"' >> ~/.bashrc
+```
+
+#### For MCP (Cursor) Usage
+
+Add the `env` block to your Cursor `settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "agent-notify": {
+      "command": "notify-mcp",
+      "env": {
+        "AGENT_NOTIFY_URL": "http://192.168.0.6:8881"
+      }
+    }
+  }
+}
+```
+
+#### Finding Your Server's IP Address
+
+```bash
+# macOS
+ipconfig getifaddr en0    # WiFi
+ipconfig getifaddr en1    # Ethernet
+
+# Linux
+hostname -I
+
+# The server prints its address on startup:
+# 📡 Listening on http://0.0.0.0:8881
+```
+
+#### Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| **Connection refused** | Check that the server is running (`npm run server`) and the URL is correct |
+| **Wrong IP address** | Use the commands above to find your server's IP, then set `AGENT_NOTIFY_URL` |
+| **Port already in use** | Start the server with a different port: `node lib/server.mjs --address 0.0.0.0:9000` |
+| **Cross-machine access** | Ensure the server uses `0.0.0.0` (default) not `localhost` |
+
+### 🔗 Notification Links (App Only)
+
+App notifications can include an optional clickable link (e.g., to a CI build, deploy dashboard, or health check endpoint). The link appears as a third line in the server terminal output and is **not** spoken via TTS.
+
+**Security Note:** Links are deliberately excluded from agent notifications. AI agents are untrusted URL sources — allowing models to inject arbitrary clickable URLs creates a phishing/malicious link surface. Links are only available for app notifications, which come from user-controlled code.
+
+#### CLI Usage
+
+```bash
+# Attach a dashboard link
+notify success "Deploy complete" --app my-api --link https://my-api.example.com/health
+
+# Attach a CI build link
+notify error "Build failed" --app github-actions --link https://github.com/user/repo/actions/runs/12345
+
+# Links are optional
+notify info "Starting deploy..." --app deploy
+```
+
+#### HTTP API Usage
+
+```bash
+curl "http://localhost:8881/notify/app?type=success&message=Deploy%20complete&app=my-api&url=https://my-api.example.com/health"
+```
+
+#### Server Terminal Output
+
+```
+✅ SUCCESS 📦 my-api
+"Deploy complete"
+🔗 https://my-api.example.com/health
+```
+
+The URL is automatically clickable in most terminals (iTerm2, VS Code terminal, Hyper, etc.).
+
 ## 🚀 Usage
 
 ### 💻 Command Line Interface
@@ -143,6 +241,7 @@ notify debug "Cache hit ratio 95%" --app webpack
 | `--voice` | `voice` | TTS voice override |
 | `--model` | `model` | Your exact model identifier (e.g., "claude-4.6-opus-high") (agent notifications only) |
 | `--app` | `app` | App name — routes to `/notify/app` endpoint |
+| `--link` | `url` | Attach a clickable link to app notification (app notifications only, not spoken) |
 
 ### 🔌 MCP Integration (Cursor AI)
 
@@ -233,6 +332,9 @@ curl "http://localhost:8881/notify/agent?type=done&message=Build%20complete&work
 # App notification
 curl "http://localhost:8881/notify/app?type=success&message=Build%20complete&app=webpack"
 
+# App notification with link
+curl "http://localhost:8881/notify/app?type=success&message=Deploy%20complete&app=my-api&url=https://my-api.example.com/health"
+
 # App debug (only shown if --log-level allows it)
 curl "http://localhost:8881/notify/app?type=debug&message=Cache%20hit%20ratio%2095%25&app=webpack"
 ```
@@ -257,6 +359,7 @@ curl "http://localhost:8881/notify/app?type=debug&message=Cache%20hit%20ratio%20
 | `message` | Yes | Message text |
 | `app` | Yes | App name (e.g., "webpack", "jest", "github-actions") |
 | `voice` | No | TTS voice override |
+| `url` | No | URL to attach as clickable link (not spoken, visual only) |
 
 ### ⚙️ Programmatic Usage
 
@@ -340,19 +443,22 @@ node lib/server.mjs --log-level error --log-level-audio error
 notify info "Starting deploy..." --app deploy
 npm run build
 if [ $? -eq 0 ]; then
-  notify success "Deploy successful" --app deploy
+  notify success "Deploy successful" --app deploy --link https://my-api.example.com/health
 else
-  notify error "Deploy failed" --app deploy
+  notify error "Deploy failed" --app deploy --link https://github.com/user/repo/actions/runs/12345
 fi
 ```
 
 #### 🌐 curl (HTTP)
 
 ```bash
-# App notification
+# App notification with link
+curl "http://localhost:8881/notify/app?type=success&message=Pipeline%20complete&app=github-actions&url=https://github.com/user/repo/actions/runs/12345"
+
+# App notification without link
 curl "http://localhost:8881/notify/app?type=success&message=Pipeline%20complete&app=github-actions"
 
-# Agent notification
+# Agent notification (links not supported for security)
 curl "http://localhost:8881/notify/agent?type=done&message=Build%20complete&model=claude-4.6-opus-high"
 ```
 
@@ -412,6 +518,11 @@ Emoji-led format with notification type capitalized. Message displayed in dim te
 
 🐛 DEBUG 📦 webpack
 "Module resolution: ./src/index.ts → ./dist/index.js"
+
+# With optional link (3-line format):
+✅ SUCCESS 📦 my-api
+"Deploy complete"
+🔗 https://my-api.example.com/health
 ```
 
 - `📦` emoji for app source (vs `🤖` for agents)
@@ -442,6 +553,8 @@ The notification sound and TTS speech run independently and in parallel. The sou
 2. **App name** (e.g., "webpack")
 3. **Message text**
 
+**Note:** The optional `url` parameter is **not** spoken via TTS. URLs are visual-only in the console output.
+
 **Examples:**
 - `"success, webpack, Build complete in 4.2 seconds"`
 - `"error, jest, 3 tests failed"`
@@ -465,43 +578,43 @@ The server selects a TTS voice using a triple fallback strategy:
 
 ### 🗺️ Voice Maps
 
-| Agent Role | Voice |
-|------------|-------|
-| Orchestrator | System default |
-| Coder | Nathan (enhanced, natural) |
-| Reviewer | Samantha (clear, analytical) |
-| Tester | Karen (Australian, methodical) |
-| Designer | Zoe (bright, creative) |
-| Researcher | Serena (calm, thoughtful) |
-| Debugger | Lee (focused, precise) |
-| DevOps | Evan (confident, reliable) |
-| Writer | Matilda (articulate, clear) |
-| Planner | Catherine (organized, strategic) |
-| Security | Ava (alert, vigilant) |
-| Refactorer | Siri 1 (systematic, efficient) |
-| Analyst | Siri 2 (analytical, detailed) |
-| Migrator | Siri 3 (methodical, careful) |
+| Agent Role | Voice | Region |
+|------------|-------|--------|
+| Orchestrator | System default | - |
+| Coder | Nathan | America |
+| Reviewer | Samantha | America |
+| Tester | Karen | Australia |
+| Designer | Zoe | America |
+| Researcher | Serena | America |
+| Debugger | Lee | America |
+| DevOps | Evan | America |
+| Writer | Matilda | America |
+| Planner | Catherine | Australia |
+| Security | Ava | America |
+| Refactorer | Siri 1 | America |
+| Analyst | Siri 2 | America |
+| Migrator | Siri 3 | America |
 
-| Agent Number | Voice |
-|--------------|-------|
-| 0 | System default |
-| 1 | Nathan |
-| 2 | Samantha |
-| 3 | Karen |
-| 4 | Zoe |
-| 5 | Serena |
-| 6 | Lee |
-| 7 | Evan |
-| 8 | Matilda |
-| 9 | Catherine |
-| 10 | Ava |
-| 11 | Siri 1 |
-| 12 | Siri 2 |
-| 13 | Siri 3 |
+| Agent Number | Voice | Region |
+|--------------|-------|--------|
+| 0 | System default | - |
+| 1 | Nathan | America |
+| 2 | Samantha | America |
+| 3 | Karen | Australia |
+| 4 | Zoe | America |
+| 5 | Serena | America |
+| 6 | Lee | America |
+| 7 | Evan | America |
+| 8 | Matilda | America |
+| 9 | Catherine | Australia |
+| 10 | Ava | America |
+| 11 | Siri 1 | America |
+| 12 | Siri 2 | America |
+| 13 | Siri 3 | America |
 
 Voice maps are configured server-side in `lib/server.mjs` for centralized management.
 
-App notifications use **Evan** (confident, reliable) as the default voice to distinguish them from agent notifications. This can be overridden with the `voice` parameter.
+App notifications use **Lee** (Australian male) as the default voice to distinguish them from the predominantly American agent voices. This can be overridden with the `voice` parameter.
 
 ## ⌨️ Keyboard Controls
 
@@ -511,7 +624,7 @@ App notifications use **Evan** (confident, reliable) as the default voice to dis
 | **S** | Skip current notification, move to the next one in the queue |
 | **Ctrl+C** | Exit the server |
 
-## ⚙️ Configuration
+## 🎵 Sound Files
 
 The system uses predefined sound files located in the `sounds/` directory:
 
