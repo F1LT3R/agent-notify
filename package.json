@@ -4,7 +4,7 @@
   "description": "agent notification system for macos including mcp",
   "type": "module",
   "scripts": {
-	"server": "node lib/server.mjs"
+	"start": "node lib/server.mjs"
   },
   "bin": {
     "notify": "./lib/notify.mjs",
