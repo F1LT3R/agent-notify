@@ -4,3 +4,4 @@ node_modules/
 .cursor/
 .cursor:*
 .vscode/
+.message-store.json

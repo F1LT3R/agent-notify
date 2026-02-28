@@ -40,6 +40,7 @@ user-agent-notify-notify type="status" message="<details>" workspaceDir="[Worksp
 | `status`     | Progress updates                             |
 | `waiting`    | Waiting for processes                        |
 | `review`     | Code changes ready for review                |
+| `message`    | Agent-to-agent conversation message           |
 
 ## Parameters
 
@@ -52,6 +53,7 @@ user-agent-notify-notify type="status" message="<details>" workspaceDir="[Worksp
 | `agentNumber` | No       | Agent number from orchestrator. Orchestrator = 0, subagents = 1, 2, 3, etc.  |
 | `voice`       | No       | Override TTS voice (bypasses server voice maps)                              |
 | `model`       | Yes      | Your exact model identifier as shown in system info (e.g., "claude-4.6-opus-high", "gpt-4o-2025-03"). Include version and variant. Shown in console log, not spoken. |
+| `to`          | No       | Agent role or name this message is directed to (e.g., "Reviewer", "Coder"). Used for agent-to-agent conversations. All agents can still see the message in the stream. |
 
 All fields beyond `type` and `message` are optional and gracefully degrade.
 
@@ -156,6 +158,64 @@ type="waiting", message="Waiting for server to start", workspaceDir="/Users/user
 type="done", message="All tasks complete", workspaceDir="/Users/user/repos/my-app", agentRole="Orchestrator", agentNumber=0, model="claude-4.6-opus-high"
 type="done", message="Build complete", workspaceDir="/Users/user/repos/my-app", agentRole="Coder", agentNumber=1, model="claude-4-sonnet"
 ```
+
+## Message Stream: `user-agent-notify-get_messages`
+
+Every notification sent via `notify` is stored in a persistent message stream. Use `get_messages` to pull messages — for monitoring, polling for responses, or reading conversation history.
+
+### Parameters
+
+| Parameter     | Required | Description                                                                 |
+|---------------|----------|-----------------------------------------------------------------------------|
+| `since_id`    | No       | Return only messages with id greater than this. Pass 0 for initial fetch, then use `latest_id` from the response for subsequent polls. |
+| `limit`       | No       | Max messages to return (default 50, max 200)                                |
+| `type`        | No       | Filter by notification type                                                 |
+| `to`          | No       | Filter messages directed to this agent role/name                            |
+| `project`     | No       | Filter by project name (derived from workspaceDir)                          |
+| `source`      | No       | Filter by source: "agent" or "app"                                          |
+| `agentRole`   | No       | Filter by agent role (e.g., "Coder", "Reviewer")                            |
+| `agentNumber` | No       | Filter by agent number                                                      |
+| `model`       | No       | Filter by model identifier                                                  |
+| `voice`       | No       | Filter by TTS voice name                                                    |
+| `app`         | No       | Filter by app name (for app notifications)                                  |
+
+### Incremental Polling
+
+```
+# First fetch — get recent messages
+user-agent-notify-get_messages since_id=0
+
+# Response includes latest_id — use it for next poll
+user-agent-notify-get_messages since_id=42
+```
+
+## Agent-to-Agent Conversations
+
+Agents can have real-time conversations using `notify` (to speak) and `get_messages` (to listen). Each agent speaks in their own TTS voice — the user hears the discussion unfold live.
+
+### How It Works
+
+1. **Send a message** using `notify` with `type="message"` and `to="RecipientRole"`:
+   ```
+   user-agent-notify-notify type="message" to="Reviewer" message="Should we use Redis or in-memory caching?" agentRole="Coder" agentNumber=1 model="claude-4.6-opus-high"
+   ```
+
+2. **Poll for responses** using `get_messages` filtered to your role:
+   ```
+   user-agent-notify-get_messages to="Coder" since_id=0
+   ```
+
+3. **Reply** with another `notify`:
+   ```
+   user-agent-notify-notify type="message" to="Coder" message="In-memory for now, Redis when we need horizontal scaling" agentRole="Reviewer" agentNumber=2 model="claude-4.6-opus-high"
+   ```
+
+### Key Points
+
+- `to` is a hint for filtering — all messages are visible to all agents in the stream
+- The user hears each agent in a distinct voice (Nathan for Coder, Samantha for Reviewer, etc.)
+- The user can press `[M]` to mute conversation audio while still seeing messages in the console
+- Use `type="message"` for conversation turns; reserve other types for their intended purpose
 
 ## Mode Availability
 
