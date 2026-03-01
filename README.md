@@ -3,7 +3,9 @@
 </p>
 
 <p align="center">
-  A macOS notification system designed for AI agents and applications, featuring audio notifications, text-to-speech with distinct voices per agent, a sequential notification queue, a persistent message stream with playback tracking, and MCP (Model Context Protocol) integration. Supports multi-window and multi-agent workflows with project identification, voice differentiation, and orchestrator-driven agent-to-agent conversations.
+  🔔 Audio notifications &nbsp;·&nbsp; 🗣️ Text-to-speech with per-agent voices &nbsp;·&nbsp; 🔌 MCP integration<br>
+  💬 Message stream &nbsp;·&nbsp; 🤝 Agent-to-agent conversations &nbsp;·&nbsp; 👁️ Multi-window watch mode<br>
+  📦 App &amp; CI notifications &nbsp;·&nbsp; 🔄 Sequential queue &nbsp;·&nbsp; ⌨️ Remote keyboard controls
 </p>
 
 ## 📑 Table of Contents
