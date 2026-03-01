@@ -7,6 +7,7 @@
 	"start": "node lib/server.mjs"
   },
   "bin": {
+    "agent-notify": "./lib/server.mjs",
     "notify": "./lib/notify.mjs",
     "notify-mcp": "./lib/mcp.mjs"
   },
