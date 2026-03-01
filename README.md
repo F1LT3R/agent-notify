@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  A macOS notification system designed for AI agents and applications, featuring audio notifications, text-to-speech with distinct voices per agent, a sequential notification queue, and MCP (Model Context Protocol) integration. Supports multi-window and multi-agent workflows with project identification and voice differentiation.
+  A macOS notification system designed for AI agents and applications, featuring audio notifications, text-to-speech with distinct voices per agent, a sequential notification queue, a persistent message stream with playback tracking, and MCP (Model Context Protocol) integration. Supports multi-window and multi-agent workflows with project identification, voice differentiation, and orchestrator-driven agent-to-agent conversations.
 </p>
 
 ## 📑 Table of Contents
@@ -28,14 +28,22 @@
   - [📋 Console Log Format](#console-log-format)
   - [🗣️ TTS Spoken Order](#tts-spoken-order)
   - [🤖 Agent Zero Convention](#agent-zero-convention)
+- [💬 Message Stream](#message-stream)
+  - [🔄 Incremental Polling](#incremental-polling)
+  - [🎧 Playback Tracking](#playback-tracking)
+- [🤝 Agent-to-Agent Conversations](#agent-to-agent-conversations)
+  - [⏳ Turn-Taking Protocol](#turn-taking-protocol)
 - [🎙️ Voice System](#voice-system)
   - [🗺️ Voice Maps](#voice-maps)
 - [⌨️ Keyboard Controls](#keyboard-controls)
 - [🎵 Sound Files](#sound-files)
+- [💾 Message Persistence](#message-persistence)
 - [🛠️ Development](#development)
 - [📋 Requirements](#requirements)
 - [📄 License](#license)
 - [👤 Author](#author)
+
+<a id="features"></a>
 
 ## ✨ Features
 
@@ -47,25 +55,36 @@
 - 🔌 **MCP Integration** - Works seamlessly with Cursor AI and other MCP-compatible tools
 - 📦 **App Notifications** - Build tools, CI scripts, and deploy pipelines can fire notifications
 - 🔄 **Notification Queue** - Sequential playback — notifications never overlap
+- 💬 **Message Stream** - Persistent message store with incremental polling and playback tracking
+- 🤝 **Agent Conversations** - Orchestrator-driven agent-to-agent audio conversations with turn-taking
 - 📊 **Log Levels** - Configurable console and audio thresholds for app notifications
-- ⌨️ **Keyboard Control** - Spacebar to stop all, S to skip current
+- ⌨️ **Keyboard Control** - Spacebar to stop all, S to skip current, M to mute agent messages
 - 🌐 **HTTP API** - RESTful endpoints for external integrations
+- 💾 **Disk Persistence** - Message store survives server restarts
+
+<a id="architecture"></a>
 
 ## 🏗️ Architecture
 
 ```
 Agent (MCP)      ──▶  MCP tool "notify"  ──▶  HTTP /notify/agent  ──┐
-                                                                     ├──▶  notification queue  ──▶  sequential playback
+                                                                     ├──▶  message store  ──▶  notification queue  ──▶  sequential playback
 Agent (HTTP/CLI) ──▶  HTTP /notify/agent  ──────────────────────────┤
                                                                      │
 App (HTTP/CLI)   ──▶  HTTP /notify/app  ────────────────────────────┘
+
+Agent (MCP)      ──▶  MCP tool "get_messages"  ──▶  HTTP /messages  ──▶  message store (read)
 ```
 
 - **`/notify/agent`** — for all AI agent notifications (MCP, HTTP, or CLI). Always plays audio and logs to console.
 - **`/notify/app`** — for all application notifications (HTTP or CLI). Subject to log level thresholds.
-- **One MCP tool** — `notify`, exclusively for agents. Calls `/notify/agent` internally.
+- **`/messages`** — query the persistent message stream. Supports incremental polling and playback tracking.
+- **Two MCP tools** — `notify` (send notifications) and `get_messages` (poll the message stream).
 - **One CLI** — `notify` command. If `--app` flag is present → `/notify/app`; otherwise → `/notify/agent`.
 - **One queue** — both endpoints feed into the same FIFO queue. Sequential playback, no overlap.
+- **One message store** — every notification is persisted. Survives server restarts.
+
+<a id="notification-types"></a>
 
 ## 🔔 Notification Types
 
@@ -80,6 +99,7 @@ App (HTTP/CLI)   ──▶  HTTP /notify/app  ───────────�
 | `status` | 📡 | Progress update | Ongoing operations |
 | `waiting` | ⏳ | Processing | Long-running tasks |
 | `review` | 👁️ | Code review needed | File changes ready |
+| `message` | 💬 | Agent conversation | Agent-to-agent dialogue |
 
 ### 📦 App Log Levels
 
@@ -90,6 +110,8 @@ App (HTTP/CLI)   ──▶  HTTP /notify/app  ───────────�
 | `warn` | ⚠️ | waiting.mp3 | Warnings, deprecations, non-critical issues |
 | `error` | ❌ | error.mp3 | Failures, crashes, critical issues |
 | `success` | ✅ | done.mp3 | Build complete, tests passed, deploy finished |
+
+<a id="installation"></a>
 
 ## 📥 Installation
 
@@ -105,7 +127,11 @@ npm install -g
 npm link
 ```
 
+<a id="configuration"></a>
+
 ## ⚙️ Configuration
+
+<a id="server-connection-url"></a>
 
 ### 🌐 Server Connection URL
 
@@ -160,10 +186,12 @@ hostname -I
 
 | Issue | Solution |
 |-------|----------|
-| **Connection refused** | Check that the server is running (`npm run server`) and the URL is correct |
+| **Connection refused** | Check that the server is running (`npm start`) and the URL is correct |
 | **Wrong IP address** | Use the commands above to find your server's IP, then set `AGENT_NOTIFY_URL` |
 | **Port already in use** | Start the server with a different port: `node lib/server.mjs --address 0.0.0.0:9000` |
 | **Cross-machine access** | Ensure the server uses `0.0.0.0` (default) not `localhost` |
+
+<a id="notification-links-app-only"></a>
 
 ### 🔗 Notification Links (App Only)
 
@@ -200,7 +228,11 @@ curl "http://localhost:8881/notify/app?type=success&message=Deploy%20complete&ap
 
 The URL is automatically clickable in most terminals (iTerm2, VS Code terminal, Hyper, etc.).
 
+<a id="usage"></a>
+
 ## 🚀 Usage
+
+<a id="command-line-interface"></a>
 
 ### 💻 Command Line Interface
 
@@ -243,6 +275,8 @@ notify debug "Cache hit ratio 95%" --app webpack
 | `--app` | `app` | App name — routes to `/notify/app` endpoint |
 | `--link` | `url` | Attach a clickable link to app notification (app notifications only, not spoken) |
 
+<a id="mcp-integration-cursor-ai"></a>
+
 ### 🔌 MCP Integration (Cursor AI)
 
 Add to your Cursor settings (`settings.json`):
@@ -273,7 +307,8 @@ mcp_agent-notify_notify({
   agentRole: "Coder",                         // Optional: agent role name
   agentNumber: 2,                             // Optional: agent number (0 = orchestrator)
   voice: "Nathan",                            // Optional: TTS voice override
-  model: "claude-4.6-sonnet"                   // Required: exact model identifier (console log only)
+  model: "claude-4.6-sonnet",                  // Required: exact model identifier (console log only)
+  to: "Reviewer"                              // Optional: recipient for agent conversations
 })
 ```
 
@@ -283,13 +318,65 @@ mcp_agent-notify_notify({
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `type` | string | Yes | Notification type: question, permission, done, error, status, waiting, review |
+| `type` | string | Yes | Notification type: question, permission, done, error, status, waiting, review, message |
 | `message` | string | Yes | Message to vocalize |
 | `workspaceDir` | string | No | The Workspace Path from `<user_info>`. Used to identify which project this notification is from. |
 | `agentRole` | string | No | Agent role name assigned by orchestrator (e.g., "Coder", "Reviewer"). The orchestrator itself should use "Orchestrator". |
 | `agentNumber` | integer | No | Agent number assigned by orchestrator. Orchestrator = 0, subagents = 1, 2, 3, etc. |
 | `voice` | string | No | Override the TTS voice for this notification. If omitted, the server selects a voice based on agentRole or agentNumber. |
 | `model` | string | Yes | Your exact model identifier as shown in system info (e.g., "claude-4.6-opus-high", "gpt-4o-2025-03"). Console log only. |
+| `to` | string | No | Agent role or name this message is directed to (e.g., "Reviewer", "Coder"). Used for agent-to-agent conversations. Display/filtering only — does not route messages. |
+
+#### 📬 MCP `get_messages` Tool
+
+Poll the persistent message stream for notifications. Supports incremental polling via `since_id`.
+
+```javascript
+mcp_agent-notify_get_messages({
+  since_id: 42,          // Optional: only messages after this ID (0 for initial fetch)
+  limit: 50,             // Optional: max messages to return (default 50, max 200)
+  type: "message",       // Optional: filter by notification type
+  to: "Coder",           // Optional: filter by recipient
+  project: "my-app",     // Optional: filter by project name
+  source: "agent",       // Optional: filter by source ("agent" or "app")
+  agentRole: "Reviewer", // Optional: filter by agent role
+  agentNumber: 2,        // Optional: filter by agent number
+  model: "claude-opus",  // Optional: filter by model
+  voice: "Samantha",     // Optional: filter by TTS voice
+  app: "webpack"         // Optional: filter by app name
+})
+```
+
+**Response:**
+
+```json
+{
+  "messages": [
+    {
+      "id": 47,
+      "timestamp": "2025-03-01T04:40:07.000Z",
+      "playedAt": "2025-03-01T04:40:35.000Z",
+      "source": "agent",
+      "type": "message",
+      "message": "Build complete",
+      "project": "my-app",
+      "agentRole": "Coder",
+      "agentNumber": 1,
+      "model": "claude-opus-4-6",
+      "voice": "Nathan",
+      "to": "Reviewer"
+    }
+  ],
+  "latest_id": 47,
+  "played_id": 47
+}
+```
+
+- `latest_id` — highest message ID in the store (use as `since_id` for next poll)
+- `played_id` — highest message ID whose audio has finished playing
+- `playedAt` — ISO timestamp when audio finished (null until played)
+
+<a id="http-api"></a>
 
 ### 🌐 HTTP API
 
@@ -297,7 +384,7 @@ Start the notification server:
 
 ```bash
 # Default (listens on 0.0.0.0:8881 - accessible from network)
-npm run server
+npm start
 
 # With custom log levels for app notifications
 node lib/server.mjs --log-level debug --log-level-audio warn
@@ -343,13 +430,14 @@ curl "http://localhost:8881/notify/app?type=debug&message=Cache%20hit%20ratio%20
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `type` | Yes | Notification type (question, permission, done, error, status, waiting, review) |
+| `type` | Yes | Notification type (question, permission, done, error, status, waiting, review, message) |
 | `message` | Yes | Message text |
 | `model` | Yes | Exact model identifier (e.g., "claude-4.6-opus-high") |
 | `workspaceDir` | No | Full workspace path (project name derived from last segment) |
 | `agentRole` | No | Agent role name |
 | `agentNumber` | No | Agent number |
 | `voice` | No | TTS voice override |
+| `to` | No | Recipient agent role/name (for agent conversations, display/filtering only) |
 
 #### 📦 `/notify/app` Parameters
 
@@ -360,6 +448,35 @@ curl "http://localhost:8881/notify/app?type=debug&message=Cache%20hit%20ratio%20
 | `app` | Yes | App name (e.g., "webpack", "jest", "github-actions") |
 | `voice` | No | TTS voice override |
 | `url` | No | URL to attach as clickable link (not spoken, visual only) |
+
+#### 📬 `/messages` Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `since_id` | No | Return messages with ID greater than this (0 for initial fetch) |
+| `limit` | No | Max messages to return (default 50, max 200) |
+| `type` | No | Filter by notification type |
+| `to` | No | Filter by recipient agent role/name |
+| `project` | No | Filter by project name |
+| `source` | No | Filter by source ("agent" or "app") |
+| `agentRole` | No | Filter by agent role |
+| `agentNumber` | No | Filter by agent number |
+| `model` | No | Filter by model identifier |
+| `voice` | No | Filter by TTS voice |
+| `app` | No | Filter by app name |
+
+```bash
+# Get all recent messages
+curl "http://localhost:8881/messages"
+
+# Incremental poll (only new messages since ID 42)
+curl "http://localhost:8881/messages?since_id=42"
+
+# Filter by type and recipient
+curl "http://localhost:8881/messages?type=message&to=Coder"
+```
+
+<a id="programmatic-usage"></a>
 
 ### ⚙️ Programmatic Usage
 
@@ -376,9 +493,13 @@ execSync('notify done "Build finished" --workspace-dir /Users/user/repos/my-app 
 execSync('notify success "Build complete" --app webpack');
 ```
 
+<a id="app-notifications"></a>
+
 ## 📦 App Notifications
 
 App notifications allow build tools, CI scripts, deploy pipelines, test runners, and any other application to fire notifications alongside agent notifications.
+
+<a id="app-log-levels"></a>
 
 ### 📊 App Log Levels
 
@@ -393,6 +514,8 @@ Apps use logger-style levels instead of agent notification types:
 | `success` | done.mp3 | ✅ | Build complete, tests passed, deploy finished |
 
 **Hierarchy (lowest to highest):** `debug < info < warn < error < success`
+
+<a id="log-level-configuration"></a>
 
 ### 🎚️ Log Level Configuration
 
@@ -462,6 +585,8 @@ curl "http://localhost:8881/notify/app?type=success&message=Pipeline%20complete&
 curl "http://localhost:8881/notify/agent?type=done&message=Build%20complete&model=claude-4.6-opus-high"
 ```
 
+<a id="notification-queue"></a>
+
 ## 🔄 Notification Queue
 
 When multiple notifications arrive simultaneously (from parallel agents, apps, or a mix), a server-side FIFO queue ensures they play sequentially — one at a time, never overlapping. All callers receive an immediate response.
@@ -473,9 +598,13 @@ When multiple notifications arrive simultaneously (from parallel agents, apps, o
 3. **Immediate response** — the server always responds immediately with `{ success: true, queued: true, position: N }`
 4. **Log level filtering** — app notifications below the `--log-level-audio` threshold are logged to console but not enqueued (no audio)
 
+<a id="multi-window--multi-agent-support"></a>
+
 ## 🪟 Multi-Window & Multi-Agent Support
 
 When running multiple Cursor windows and parallel agents, the notification system identifies the source of each notification through project name, agent role, and agent number.
+
+<a id="console-log-format"></a>
 
 ### 📋 Console Log Format
 
@@ -530,6 +659,8 @@ Emoji-led format with notification type capitalized. Message displayed in dim te
 - No project folder (workspaceDir not supported for apps)
 - `app` name shown where agent role would be
 
+<a id="tts-spoken-order"></a>
+
 ### 🗣️ TTS Spoken Order
 
 The notification sound and TTS speech run independently and in parallel. The sound fires immediately, and TTS begins after a 500ms delay. The spoken order matches the screen reading order — parts are omitted when not provided:
@@ -559,6 +690,8 @@ The notification sound and TTS speech run independently and in parallel. The sou
 - `"success, webpack, Build complete in 4.2 seconds"`
 - `"error, jest, 3 tests failed"`
 
+<a id="agent-zero-convention"></a>
+
 ### 🤖 Agent Zero Convention
 
 When using an orchestrator with multiple subagents:
@@ -566,6 +699,85 @@ When using an orchestrator with multiple subagents:
 - **Orchestrator** = `agentRole="Orchestrator"`, `agentNumber=0` → spoken as "Orchestrator, Agent Zero"
 - **Subagent 1** = `agentRole="Coder"`, `agentNumber=1` → spoken as "Coder, Agent 1"
 - **Subagent 2** = `agentRole="Reviewer"`, `agentNumber=2` → spoken as "Reviewer, Agent 2"
+
+<a id="message-stream"></a>
+
+## 💬 Message Stream
+
+Every notification sent via `notify` is stored in a persistent message stream. Use the `/messages` endpoint (or `get_messages` MCP tool) to query the stream for monitoring, polling, or reading conversation history.
+
+<a id="incremental-polling"></a>
+
+### 🔄 Incremental Polling
+
+Use `since_id` for efficient incremental polling:
+
+1. **First fetch** — pass `since_id=0` to get recent messages
+2. **Note `latest_id`** from the response
+3. **Subsequent polls** — pass `since_id=<latest_id>` to get only new messages
+
+```bash
+# Initial fetch
+curl "http://localhost:8881/messages?since_id=0"
+# → { "messages": [...], "latest_id": 42, "played_id": 42 }
+
+# Next poll — only new messages
+curl "http://localhost:8881/messages?since_id=42"
+```
+
+<a id="playback-tracking"></a>
+
+### 🎧 Playback Tracking
+
+The message stream tracks audio playback state:
+
+- **`played_id`** — the highest message ID whose audio has finished playing
+- **`playedAt`** — per-message ISO timestamp (null until audio finishes, then set)
+
+Use these to know when a message has been heard before sending the next one. This is the foundation for the [turn-taking protocol](#turn-taking-protocol).
+
+<a id="agent-to-agent-conversations"></a>
+
+## 🤝 Agent-to-Agent Conversations
+
+The orchestrator creates audio conversations by sending `notify` on behalf of different agents. The user hears each agent in a distinct TTS voice — the conversation unfolds live through audio.
+
+**The orchestrator drives the conversation.** Individual agents don't need to independently poll the stream — the orchestrator:
+- Decides what each agent says and when
+- Sends `notify` using each agent's `agentRole` and `agentNumber`
+- Waits for each message to finish playing before sending the next
+
+Agents *can* independently poll `get_messages` for cross-tool scenarios (e.g., bridging Cursor and Claude Code agents via the shared message stream).
+
+<a id="turn-taking-protocol"></a>
+
+### ⏳ Turn-Taking Protocol
+
+The orchestrator must wait for each message to finish playing before sending the next. Without this, messages queue up faster than audio can play and the conversation loses its natural pacing.
+
+**Flow:**
+
+1. **Send** on behalf of an agent — note the returned `id`:
+   ```
+   notify(type="message", to="Reviewer", message="...", agentRole="Coder", agentNumber=1) → id: 47
+   ```
+
+2. **Wait** for audio to finish — poll `get_messages` until `played_id >= 47`:
+   ```
+   get_messages(since_id=46) → { played_id: 46 }  # still playing
+   get_messages(since_id=46) → { played_id: 47 }  # done — send next turn
+   ```
+
+3. **Send the next turn** on behalf of the other agent, only after the previous message has been played.
+
+**Key details:**
+
+- The orchestrator waits for each message's `id`, not for the queue to be empty. Multiple conversations can run simultaneously without blocking each other.
+- When the user skips audio (spacebar), all queued messages get `playedAt` set immediately, so the orchestrator proceeds without getting stuck.
+- Use `type="message"` for conversation turns; reserve other types for their intended purpose.
+- The `to` parameter indicates who the message is addressed to (for display/filtering) — it does not route or deliver messages.
+
+<a id="voice-system"></a>
 
 ## 🎙️ Voice System
 
@@ -575,6 +787,8 @@ The server selects a TTS voice using a triple fallback strategy:
 2. **Role-based map** — If `agentRole` matches a role in the map, use that voice
 3. **Index-based map** — If `agentNumber` matches an index in the map, use that voice
 4. **System default** — Use macOS default voice
+
+<a id="voice-maps"></a>
 
 ### 🗺️ Voice Maps
 
@@ -616,13 +830,18 @@ Voice maps are configured server-side in `lib/server.mjs` for centralized manage
 
 App notifications use **Lee** (Australian male) as the default voice to distinguish them from the predominantly American agent voices. This can be overridden with the `voice` parameter.
 
+<a id="keyboard-controls"></a>
+
 ## ⌨️ Keyboard Controls
 
 | Key | Action |
 |-----|--------|
 | **Spacebar** | Stop current audio AND clear the entire queue (discard all pending notifications) |
 | **S** | Skip current notification, move to the next one in the queue |
+| **M** | Toggle mute for `message` type notifications (conversations). Other types still play. |
 | **Ctrl+C** | Exit the server |
+
+<a id="sound-files"></a>
 
 ## 🎵 Sound Files
 
@@ -635,6 +854,21 @@ The system uses predefined sound files located in the `sounds/` directory:
 - 📡 `status.mp3` - Status update (also used for app `info`)
 - ⏳ `waiting.mp3` - Processing sound (also used for app `warn`)
 
+<a id="message-persistence"></a>
+
+## 💾 Message Persistence
+
+The message store is persisted to `.message-store.json` in the project root. This ensures:
+
+- **Messages survive server restarts** — the stream is reloaded on startup
+- **Playback state recovery** — on restart, any unplayed messages from the previous session are automatically marked as played, so polling orchestrators don't get stuck waiting
+- **Automatic compaction** — the store holds up to 500 messages; older messages are discarded
+- **Periodic flush** — the store is saved to disk every 50 messages, and on graceful shutdown (Ctrl+C or SIGTERM)
+
+The TTS system includes a 72-second timeout per message to prevent the audio queue from stalling if the macOS `say` command fails to return.
+
+<a id="development"></a>
+
 ## 🛠️ Development
 
 ### 📁 Project Structure
@@ -643,9 +877,10 @@ The system uses predefined sound files located in the `sounds/` directory:
 agent-notify/
 ├── lib/
 │   ├── notify.mjs      # CLI interface
-│   ├── mcp.mjs         # MCP server
-│   └── server.mjs      # HTTP server (queue, two endpoints, log levels)
+│   ├── mcp.mjs         # MCP server (notify + get_messages tools)
+│   └── server.mjs      # HTTP server (queue, endpoints, message store, TTS)
 ├── sounds/             # Audio files
+├── .message-store.json # Persistent message stream (auto-generated)
 ├── package.json
 └── README.md
 ```
@@ -654,7 +889,7 @@ agent-notify/
 
 ```bash
 # Start the notification server (default settings)
-npm run server
+npm start
 
 # Server runs on http://0.0.0.0:8881
 
@@ -694,15 +929,21 @@ curl "http://localhost:8881/notify/agent?type=done&message=Test&model=test"
 curl "http://localhost:8881/notify/app?type=success&message=Test&app=test"
 ```
 
+<a id="requirements"></a>
+
 ## 📋 Requirements
 
 - 🍎 macOS (uses `afplay` and `say` commands)
 - 🟢 Node.js 18+
 - 🔊 Audio output capability
 
+<a id="license"></a>
+
 ## 📄 License
 
 See LICENSE.md for details.
+
+<a id="author"></a>
 
 ## 👤 Author
 
