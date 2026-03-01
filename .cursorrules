@@ -1,98 +1,130 @@
-# Cursor AI Agent Rules
+---
+description: 
+alwaysApply: true
+---
 
-## MANDATORY: Agent Notification System
+# Mandatory Agent Notification System
 
-Send notifications at ALL pause points in Agent and Debug modes.
+Send notifications at **all pause points** in Agent and Debug modes.
 
-### Notification Types
+**MANDATORY: Send at least one notification per Agent mode turn.**
 
-- "done" - Task completion
-- "question" - Need user input
-- "permission" - Need mode changes, or need user to allow command
-- "error" - Errors blocking progress
-- "status" - Progress updates
-- "waiting" - Waiting for processes
-- "review" - Code changes ready for review
-- "message" - Agent-to-agent conversation message
+If none of the specific triggers below apply, send a final notification:
 
-## Agent Mode & Debug Mode
+```
+user-agent-notify-notify type="status" message="<details>" workspaceDir="[Workspace Path from <user_info>]"
+```
 
-Use the `mcp_agent-notify_notify` MCP tool with `type` and `message` (required), plus optional context parameters.
+## What Counts as a Pause Point
 
-### Parameters
+### Requires Notification
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `type` | Yes | Notification type (see types above) |
-| `message` | Yes | Message to vocalize |
-| `workspaceDir` | No | The Workspace Path from `<user_info>` — identifies which project this notification is from |
-| `agentRole` | No | Role name assigned by orchestrator (e.g., "Coder", "Reviewer"). Orchestrator uses "Orchestrator" for itself. |
-| `agentNumber` | No | Agent number assigned by orchestrator. Orchestrator = 0, subagents = 1, 2, 3, etc. |
-| `voice` | No | Override the TTS voice (bypasses server voice maps) |
-| `model` | Yes | Your exact model identifier as shown in system info (e.g., "claude-4.6-opus-high", "gpt-4o-2025-03"). Include version and variant. Shown in console log, not spoken. |
-| `to` | No | Agent role or name this message is directed to (e.g., "Reviewer", "Coder"). Used for agent-to-agent conversations. All agents can still see the message in the stream. |
+- Before ANY command that needs user approval
+- Before code reviews or file changes that need review
+- After completing tasks (`type="done"`)
+- When asking the user questions (`type="question"`)
+- During long operations (`type="status"`)
+- When errors occur (`type="error"`)
+- When waiting for processes (`type="waiting"`)
 
-All fields beyond `type` and `message` are optional and gracefully degrade — the system works fine without them.
+### Does NOT Require Notification
+
+- Answering user questions with information only (no actions taken)
+- Reading files or exploring code to answer questions
+- Explaining code or concepts
+- Any response in Ask mode or Plan mode (notifications not available)
+
+## Notification Types
+
+| Type         | Purpose                                      |
+|--------------|----------------------------------------------|
+| `done`       | Task completion                              |
+| `question`   | Need user input                              |
+| `permission` | Need mode changes or user command approval   |
+| `error`      | Errors blocking progress                     |
+| `status`     | Progress updates                             |
+| `waiting`    | Waiting for processes                        |
+| `review`     | Code changes ready for review                |
+| `message`    | Agent-to-agent conversation message           |
+
+## Parameters
+
+| Parameter     | Required | Description                                                                 |
+|---------------|----------|-----------------------------------------------------------------------------|
+| `type`        | Yes      | Notification type (see types above)                                         |
+| `message`     | Yes      | Message to vocalize                                                         |
+| `workspaceDir`| No       | The Workspace Path from `<user_info>` — identifies which project this is from |
+| `agentRole`   | No       | Role name from orchestrator (e.g., "Coder"). Orchestrator uses "Orchestrator". |
+| `agentNumber` | No       | Agent number from orchestrator. Orchestrator = 0, subagents = 1, 2, 3, etc.  |
+| `voice`       | No       | Override TTS voice (bypasses server voice maps)                              |
+| `model`       | Yes      | Your exact model identifier as shown in system info (e.g., "claude-4.6-opus-high", "gpt-4o-2025-03"). Include version and variant. Shown in console log, not spoken. |
+| `to`          | No       | Agent role or name this message is directed to (e.g., "Reviewer", "Coder"). Used for agent-to-agent conversations. All agents can still see the message in the stream. |
+
+All fields beyond `type` and `message` are optional and gracefully degrade.
 
 ### Notify Response
 
 The `notify` tool returns an `id` field — the unique message ID in the stream. Use this for playback tracking (see Turn-Taking below).
 
-### REQUIRED Notification Triggers:
-
-1. **Before proposing ANY command** that requires user approval:
-   ```
-   mcp_agent-notify_notify type="permission" message="Requesting approval for: [command description]" workspaceDir="[Workspace Path from <user_info>]"
-   ```
-
-2. **Before code reviews or file changes** that need user review:
-   ```
-   mcp_agent-notify_notify type="review" message="Code changes ready for review: [description]" workspaceDir="[Workspace Path from <user_info>]"
-   ```
-
-3. **After completing tasks**:
-   ```
-   mcp_agent-notify_notify type="done" message="[Task description] completed" workspaceDir="[Workspace Path from <user_info>]"
-   ```
-
-3. **When asking questions**:
-   ```
-   mcp_agent-notify_notify type="question" message="[Question summary]" workspaceDir="[Workspace Path from <user_info>]"
-   ```
-
-4. **During long operations**:
-   ```
-   mcp_agent-notify_notify type="status" message="[Current operation]" workspaceDir="[Workspace Path from <user_info>]"
-   ```
-
-5. **When errors occur**:
-   ```
-   mcp_agent-notify_notify type="error" message="[Error description]" workspaceDir="[Workspace Path from <user_info>]"
-   ```
-
-6. **When waiting for processes**:
-   ```
-   mcp_agent-notify_notify type="waiting" message="[What we're waiting for]" workspaceDir="[Workspace Path from <user_info>]"
-   ```
-
 ### workspaceDir
 
-Always pass `workspaceDir` using the **full Workspace Path** from `<user_info>` (e.g., `/Users/user/repos/my-app`). The server derives the project name from the last path segment. If `<user_info>` is not available, omit `workspaceDir` — don't guess.
+Always pass `workspaceDir` using the **full Workspace Path** from `<user_info>` (e.g., `/Users/user/repos/my-app`). The server derives the project name from the last path segment. If `<user_info>` is not available, omit it — don't guess.
 
-### Agent Zero Convention (Multi-Agent / Orchestrator)
+## Required Notification Triggers
+
+### Before proposing ANY command that requires user approval
+
+```
+user-agent-notify-notify type="permission" message="Requesting approval for: [command description]" workspaceDir="[Workspace Path from <user_info>]"
+```
+
+### Before code reviews or file changes that need review
+
+```
+user-agent-notify-notify type="review" message="Code changes ready for review: [description]" workspaceDir="[Workspace Path from <user_info>]"
+```
+
+### After completing tasks
+
+```
+user-agent-notify-notify type="done" message="[Task description] completed" workspaceDir="[Workspace Path from <user_info>]"
+```
+
+### When asking questions
+
+```
+user-agent-notify-notify type="question" message="[Question summary]" workspaceDir="[Workspace Path from <user_info>]"
+```
+
+### During long operations
+
+```
+user-agent-notify-notify type="status" message="[Current operation]" workspaceDir="[Workspace Path from <user_info>]"
+```
+
+### When errors occur
+
+```
+user-agent-notify-notify type="error" message="[Error description]" workspaceDir="[Workspace Path from <user_info>]"
+```
+
+### When waiting for processes
+
+```
+user-agent-notify-notify type="waiting" message="[What we're waiting for]" workspaceDir="[Workspace Path from <user_info>]"
+```
+
+## Agent Zero Convention (Multi-Agent / Orchestrator)
 
 When orchestrating multiple subagents:
 
-- **Orchestrator** always identifies itself as `agentRole="Orchestrator"`, `agentNumber=0`
-- **Subagents** are assigned roles and numbers starting from 1:
-  - `agentRole="Coder"`, `agentNumber=1`
-  - `agentRole="Reviewer"`, `agentNumber=2`
-  - etc.
+- **Orchestrator** identifies itself as `agentRole="Orchestrator"`, `agentNumber=0`
+- **Subagents** are assigned roles and numbers starting from 1 (e.g., `agentRole="Coder"`, `agentNumber=1`)
 - Pass `model` with your exact model identifier (e.g., `model="claude-4.6-opus-high"`)
 
 **IMPORTANT: The orchestrator is responsible for sending notifications on behalf of its subagents.** When a subagent completes a turn, the orchestrator should send a notification using that subagent's `agentRole` and `agentNumber`, so the user can hear which agent did what. Use the orchestrator's own identity (`agentRole="Orchestrator"`, `agentNumber=0`) only when reporting its own actions.
 
-#### Available Agent Roles
+### Available Agent Roles
 
 The following agent roles are available with distinct TTS voices. Orchestrators should assign these roles to subagents based on their responsibilities:
 
@@ -113,57 +145,57 @@ The following agent roles are available with distinct TTS voices. Orchestrators 
 | **Analyst** | Data analysis, performance profiling | Siri 2 | America |
 | **Migrator** | Upgrades, migrations, version bumps | Siri 3 | America |
 
-### Solo Agent Usage
+Solo (non-orchestrated) agents only need `type`, `message`, and optionally `workspaceDir`.
 
-Solo (non-orchestrated) agents only need `type` and `message`, optionally `workspaceDir`:
+## Examples
+
+### Solo agent (recommended default)
+
 ```
-mcp_agent-notify_notify type="done" message="Build complete" workspaceDir="/Users/user/repos/my-app"
+type="done", message="README updated successfully", workspaceDir="/Users/user/repos/my-app"
+type="permission", message="About to run npm install command", workspaceDir="/Users/user/repos/my-app"
+type="review", message="Code changes ready for review", workspaceDir="/Users/user/repos/my-app"
+type="question", message="Which approach do you prefer?", workspaceDir="/Users/user/repos/my-app"
+type="error", message="File not found, cannot proceed", workspaceDir="/Users/user/repos/my-app"
+type="status", message="Processing 15 files...", workspaceDir="/Users/user/repos/my-app"
+type="waiting", message="Waiting for server to start", workspaceDir="/Users/user/repos/my-app"
 ```
 
-### Examples:
+### Orchestrator examples
 
-- type="permission", message="About to run npm install command", workspaceDir="/Users/user/repos/my-app"
-- type="review", message="Code changes ready for review", workspaceDir="/Users/user/repos/my-app"
-- type="review", message="Multiple files modified - please review", workspaceDir="/Users/user/repos/my-app"
-- type="done", message="README updated successfully", workspaceDir="/Users/user/repos/my-app"
-- type="question", message="Which approach do you prefer?", workspaceDir="/Users/user/repos/my-app"
-- type="error", message="File not found, cannot proceed", workspaceDir="/Users/user/repos/my-app"
-- type="status", message="Processing 15 files...", workspaceDir="/Users/user/repos/my-app"
-- type="waiting", message="Waiting for server to start", workspaceDir="/Users/user/repos/my-app"
+```
+type="done", message="All tasks complete", workspaceDir="/Users/user/repos/my-app", agentRole="Orchestrator", agentNumber=0, model="claude-4.6-opus-high"
+type="done", message="Build complete", workspaceDir="/Users/user/repos/my-app", agentRole="Coder", agentNumber=1, model="claude-4-sonnet"
+```
 
-### Orchestrator Examples:
-
-- type="done", message="All tasks complete", workspaceDir="/Users/user/repos/my-app", agentRole="Orchestrator", agentNumber=0, model="claude-4.6-opus-high"
-- type="done", message="Build complete", workspaceDir="/Users/user/repos/my-app", agentRole="Coder", agentNumber=1, model="claude-4-sonnet"
-
-## Message Stream: `mcp_agent-notify_get_messages`
+## Message Stream: `user-agent-notify-get_messages`
 
 Every notification sent via `notify` is stored in a persistent message stream. Use `get_messages` to pull messages — for monitoring, polling for responses, or reading conversation history.
 
 ### Parameters
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `since_id` | No | Return only messages with id greater than this. Pass 0 for initial fetch, then use `latest_id` from the response for subsequent polls. |
-| `limit` | No | Max messages to return (default 50, max 200) |
-| `type` | No | Filter by notification type |
-| `to` | No | Filter messages directed to this agent role/name |
-| `project` | No | Filter by project name (derived from workspaceDir) |
-| `source` | No | Filter by source: "agent" or "app" |
-| `agentRole` | No | Filter by agent role (e.g., "Coder", "Reviewer") |
-| `agentNumber` | No | Filter by agent number |
-| `model` | No | Filter by model identifier |
-| `voice` | No | Filter by TTS voice name |
-| `app` | No | Filter by app name (for app notifications) |
+| Parameter     | Required | Description                                                                 |
+|---------------|----------|-----------------------------------------------------------------------------|
+| `since_id`    | No       | Return only messages with id greater than this. Pass 0 for initial fetch, then use `latest_id` from the response for subsequent polls. |
+| `limit`       | No       | Max messages to return (default 50, max 200)                                |
+| `type`        | No       | Filter by notification type                                                 |
+| `to`          | No       | Filter messages directed to this agent role/name                            |
+| `project`     | No       | Filter by project name (derived from workspaceDir)                          |
+| `source`      | No       | Filter by source: "agent" or "app"                                          |
+| `agentRole`   | No       | Filter by agent role (e.g., "Coder", "Reviewer")                            |
+| `agentNumber` | No       | Filter by agent number                                                      |
+| `model`       | No       | Filter by model identifier                                                  |
+| `voice`       | No       | Filter by TTS voice name                                                    |
+| `app`         | No       | Filter by app name (for app notifications)                                  |
 
 ### Incremental Polling
 
 ```
 # First fetch — get recent messages
-mcp_agent-notify_get_messages since_id=0
+user-agent-notify-get_messages since_id=0
 
 # Response includes latest_id — use it for next poll
-mcp_agent-notify_get_messages since_id=42
+user-agent-notify-get_messages since_id=42
 ```
 
 ### Playback Tracking
@@ -191,13 +223,13 @@ The orchestrator must wait for each message to finish playing before sending the
 
 1. **Send** on behalf of an agent — note the returned `id`:
    ```
-   mcp_agent-notify_notify type="message" to="Reviewer" message="..." agentRole="Coder" agentNumber=1 → id: 47
+   user-agent-notify-notify type="message" to="Reviewer" message="..." agentRole="Coder" agentNumber=1 → id: 47
    ```
 
 2. **Wait** for audio to finish — poll `get_messages` until `played_id >= 47`:
    ```
-   mcp_agent-notify_get_messages since_id=46 → { played_id: 46 }  # still playing
-   mcp_agent-notify_get_messages since_id=46 → { played_id: 47 }  # done — send next turn
+   user-agent-notify-get_messages since_id=46 → { played_id: 46 }  # still playing
+   user-agent-notify-get_messages since_id=46 → { played_id: 47 }  # done — send next turn
    ```
 
 3. **Send the next turn** on behalf of the other agent, only after the previous message has been played.
@@ -214,13 +246,21 @@ The orchestrator must wait for each message to finish playing before sending the
 - The user can press `[M]` to mute conversation audio while still seeing messages in the console
 - Use `type="message"` for conversation turns; reserve other types for their intended purpose
 
-## Ask Mode & Plan Mode
+## Mode Availability
 
-Notifications not available in these modes.
+| Mode  | Notifications |
+|-------|---------------|
+| Agent | ✅ Available   |
+| Debug | ✅ Available   |
+| Ask   | ❌ Not needed  |
+| Plan  | ❌ Not needed  |
 
-## CRITICAL: Always notify BEFORE requesting permissions or reviews
+## Critical Reminder
+
+**Always notify BEFORE requesting permissions or reviews.**
 
 This ensures users get audio alerts before:
+
 - Approval dialogs appear
 - Review dialogs are shown
 - Any pause point that requires user interaction
