@@ -37,6 +37,7 @@
   - [⏳ Turn-Taking Protocol](#turn-taking-protocol)
 - [🎙️ Voice System](#voice-system)
   - [🗺️ Voice Maps](#voice-maps)
+- [👁️ Watch Mode](#watch-mode)
 - [⌨️ Keyboard Controls](#keyboard-controls)
 - [🎵 Sound Files](#sound-files)
 - [💾 Message Persistence](#message-persistence)
@@ -61,6 +62,8 @@
 - 🤝 **Agent Conversations** - Orchestrator-driven agent-to-agent audio conversations with turn-taking
 - 📊 **Log Levels** - Configurable console and audio thresholds for app notifications
 - ⌨️ **Keyboard Control** - Spacebar to stop all, S to skip current, M to mute agent messages
+- 👁️ **Watch Mode** - Display-only panels that mirror notifications without playing audio
+- 🔗 **Synced Controls** - Mute, stop, and skip sync across all panels via remote control endpoints
 - 🌐 **HTTP API** - RESTful endpoints for external integrations
 - 💾 **Disk Persistence** - Message store survives server restarts
 
@@ -190,7 +193,7 @@ hostname -I
 |-------|----------|
 | **Connection refused** | Check that the server is running (`npm start`) and the URL is correct |
 | **Wrong IP address** | Use the commands above to find your server's IP, then set `AGENT_NOTIFY_URL` |
-| **Port already in use** | Start the server with a different port: `node lib/server.mjs --address 0.0.0.0:9000` |
+| **Port already in use** | The server auto-switches to [watch mode](#watch-mode). Or use a different port: `node lib/server.mjs --address 0.0.0.0:9000` |
 | **Cross-machine access** | Ensure the server uses `0.0.0.0` (default) not `localhost` |
 
 <a id="notification-links-app-only"></a>
@@ -402,6 +405,9 @@ node lib/server.mjs --address 9000
 
 # Localhost only (NOT accessible from other machines)
 node lib/server.mjs --address localhost:8881
+
+# Watch mode — display only, no audio (auto-detects or explicit)
+node lib/server.mjs --watch
 ```
 
 **🌍 Network Access:**
@@ -832,16 +838,62 @@ Voice maps are configured server-side in `lib/server.mjs` for centralized manage
 
 App notifications use **Lee** (Australian male) as the default voice to distinguish them from the predominantly American agent voices. This can be overridden with the `voice` parameter.
 
+<a id="watch-mode"></a>
+
+## 👁️ Watch Mode
+
+Watch mode lets you open additional terminal panels that mirror all notifications without playing audio. Useful for monitoring from multiple windows or screens.
+
+### Starting Watch Mode
+
+Watch mode activates automatically or explicitly:
+
+```bash
+# Auto-detect — if port is already in use, switches to watch mode
+npm start
+
+# Explicit — skip port binding, go straight to watch mode
+node lib/server.mjs --watch
+```
+
+When auto-detected, you'll see:
+
+```
+⚠️  Port 8881 already in use — switching to watch mode
+```
+
+Watch mode polls the primary server's `/messages` endpoint every second and renders new notifications with the same colored formatting.
+
+### Synced Controls
+
+Keyboard controls work from any panel — watch mode sends commands to the primary server via `POST /controls/*` endpoints, and the action is broadcast to all panels through the message stream:
+
+| Endpoint | Action |
+|----------|--------|
+| `POST /controls/stop` | Stop all audio and clear the queue |
+| `POST /controls/skip` | Skip the current notification |
+| `POST /controls/mute` | Toggle mute for agent messages |
+
+The `/messages` response includes a `muted` field so all panels stay in sync with the current mute state.
+
+### What Watch Mode Does NOT Do
+
+- No audio playback — display only
+- No notification queue — read-only polling
+- Never writes to `/notify/*` — completely passive
+
 <a id="keyboard-controls"></a>
 
 ## ⌨️ Keyboard Controls
+
+These controls work on both the primary server and any watch mode panel. In watch mode, keypresses are forwarded to the primary server and the resulting action syncs to all connected panels.
 
 | Key | Action |
 |-----|--------|
 | **Spacebar** | Stop current audio AND clear the entire queue (discard all pending notifications) |
 | **S** | Skip current notification, move to the next one in the queue |
 | **M** | Toggle mute for `message` type notifications (conversations). Other types still play. |
-| **Ctrl+C** | Exit the server |
+| **Ctrl+C** | Exit the server (or watch mode panel) |
 
 <a id="sound-files"></a>
 
