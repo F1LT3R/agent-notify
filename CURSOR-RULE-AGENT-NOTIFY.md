@@ -57,6 +57,10 @@ user-agent-notify-notify type="status" message="<details>" workspaceDir="[Worksp
 
 All fields beyond `type` and `message` are optional and gracefully degrade.
 
+### Notify Response
+
+The `notify` tool returns an `id` field — the unique message ID in the stream. Use this for playback tracking (see Turn-Taking below).
+
 ### workspaceDir
 
 Always pass `workspaceDir` using the **full Workspace Path** from `<user_info>` (e.g., `/Users/user/repos/my-app`). The server derives the project name from the last path segment. If `<user_info>` is not available, omit it — don't guess.
@@ -189,30 +193,50 @@ user-agent-notify-get_messages since_id=0
 user-agent-notify-get_messages since_id=42
 ```
 
+### Playback Tracking
+
+The `get_messages` response includes:
+- `played_id` — the highest message ID whose audio has finished playing
+- Each message has a `playedAt` field (null until audio finishes, then an ISO timestamp)
+
+Use these to know when a message has been heard by the user before sending the next one.
+
 ## Agent-to-Agent Conversations
 
-Agents can have real-time conversations using `notify` (to speak) and `get_messages` (to listen). Each agent speaks in their own TTS voice — the user hears the discussion unfold live.
+The orchestrator creates audio conversations by sending `notify` on behalf of different agents. The user hears each agent in a distinct TTS voice — the conversation unfolds live through audio.
 
-### How It Works
+**The orchestrator drives the conversation.** Individual agents don't need to poll the stream or respond independently — the orchestrator:
+- Decides what each agent says and when
+- Sends `notify` using each agent's `agentRole` and `agentNumber`
+- Waits for each message to finish playing before sending the next
 
-1. **Send a message** using `notify` with `type="message"` and `to="RecipientRole"`:
+### Turn-Taking Protocol
+
+The orchestrator must wait for each message to finish playing before sending the next. Without this, messages queue up faster than audio can play and the conversation loses its natural pacing.
+
+**Flow:**
+
+1. **Send** on behalf of an agent — note the returned `id`:
    ```
-   user-agent-notify-notify type="message" to="Reviewer" message="Should we use Redis or in-memory caching?" agentRole="Coder" agentNumber=1 model="claude-4.6-opus-high"
+   user-agent-notify-notify type="message" to="Reviewer" message="..." agentRole="Coder" agentNumber=1 → id: 47
    ```
 
-2. **Poll for responses** using `get_messages` filtered to your role:
+2. **Wait** for audio to finish — poll `get_messages` until `played_id >= 47`:
    ```
-   user-agent-notify-get_messages to="Coder" since_id=0
+   user-agent-notify-get_messages since_id=46 → { played_id: 46 }  # still playing
+   user-agent-notify-get_messages since_id=46 → { played_id: 47 }  # done — send next turn
    ```
 
-3. **Reply** with another `notify`:
-   ```
-   user-agent-notify-notify type="message" to="Coder" message="In-memory for now, Redis when we need horizontal scaling" agentRole="Reviewer" agentNumber=2 model="claude-4.6-opus-high"
-   ```
+3. **Send the next turn** on behalf of the other agent, only after the previous message has been played.
+
+**Important:** The orchestrator waits for each message's `id`, not for the queue to be empty. This means multiple conversations (e.g., two debates in separate windows) can run simultaneously without blocking each other — they interleave in audio output but each progresses at its own pace.
+
+**When the user skips audio** (spacebar or skip key), all queued messages get `playedAt` set immediately, so the orchestrator proceeds without getting stuck.
 
 ### Key Points
 
-- `to` is a hint for filtering — all messages are visible to all agents in the stream
+- By default, the orchestrator controls both sides of the conversation — but agents *can* independently poll `get_messages` for cross-tool scenarios (e.g., bridging Cursor and Claude Code agents)
+- `to` indicates who the message is addressed to (for display/filtering) — it does not route or deliver messages
 - The user hears each agent in a distinct voice (Nathan for Coder, Samantha for Reviewer, etc.)
 - The user can press `[M]` to mute conversation audio while still seeing messages in the console
 - Use `type="message"` for conversation turns; reserve other types for their intended purpose
