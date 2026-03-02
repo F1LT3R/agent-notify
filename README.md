@@ -78,13 +78,14 @@ Agent (HTTP/CLI) ──▶  HTTP /notify/agent  ──────────�
                                                                      │
 App (HTTP/CLI)   ──▶  HTTP /notify/app  ────────────────────────────┘
 
-Agent (MCP)      ──▶  MCP tool "get_messages"  ──▶  HTTP /messages  ──▶  message store (read)
+Agent (MCP)      ──▶  MCP tool "get_messages"          ──▶  HTTP /messages         ──▶  message store (read)
+Agent (MCP)      ──▶  MCP tool "check_message_status"  ──▶  HTTP /messages/status  ──▶  counters only (read)
 ```
 
 - **`/notify/agent`** — for all AI agent notifications (MCP, HTTP, or CLI). Always plays audio and logs to console.
 - **`/notify/app`** — for all application notifications (HTTP or CLI). Subject to log level thresholds.
 - **`/messages`** — query the persistent message stream. Supports incremental polling and playback tracking.
-- **Two MCP tools** — `notify` (send notifications) and `get_messages` (poll the message stream).
+- **Three MCP tools** — `notify` (send notifications), `get_messages` (poll the message stream), and `check_message_status` (lightweight counters for turn-taking).
 - **One CLI** — `notify` command. If `--app` flag is present → `/notify/app`; otherwise → `/notify/agent`.
 - **One queue** — both endpoints feed into the same FIFO queue. Sequential playback, no overlap.
 - **One message store** — every notification is persisted. Survives server restarts.
@@ -380,6 +381,29 @@ mcp_agent-notify_get_messages({
 - `latest_id` — highest message ID in the store (use as `since_id` for next poll)
 - `played_id` — highest message ID whose audio has finished playing
 - `playedAt` — ISO timestamp when audio finished (null until played)
+
+#### ⚡ MCP `check_message_status` Tool
+
+**ALWAYS use `check_message_status` for turn-taking and playback polling — NEVER use `get_messages` for this.** Returns ~30 tokens instead of ~400-600, saving thousands of tokens over a conversation.
+
+```javascript
+mcp_agent-notify_check_message_status({
+  since_id: 46   // Optional: check for messages newer than this ID
+})
+```
+
+**Response** (~30 tokens):
+
+```json
+{ "latest_id": 47, "played_id": 45, "muted": false, "has_new": true, "queue_length": 2 }
+```
+
+- `latest_id` — highest message ID in the store
+- `played_id` — highest message ID whose audio has finished playing
+- `has_new` — true if `latest_id > since_id`
+- `queue_length` — number of notifications waiting in the audio queue
+
+Only use `get_messages` when you need actual message content.
 
 <a id="http-api"></a>
 
@@ -770,10 +794,10 @@ The orchestrator must wait for each message to finish playing before sending the
    notify(type="message", to="Reviewer", message="...", agentRole="Coder", agentNumber=1) → id: 47
    ```
 
-2. **Wait** for audio to finish — poll `get_messages` until `played_id >= 47`:
+2. **Wait** for audio to finish — poll `check_message_status` until `played_id >= 47`:
    ```
-   get_messages(since_id=46) → { played_id: 46 }  # still playing
-   get_messages(since_id=46) → { played_id: 47 }  # done — send next turn
+   check_message_status(since_id=46) → { played_id: 46, has_new: true }  # still playing
+   check_message_status(since_id=46) → { played_id: 47, has_new: true }  # done — send next turn
    ```
 
 3. **Send the next turn** on behalf of the other agent, only after the previous message has been played.
@@ -931,7 +955,7 @@ The TTS system includes a 72-second timeout per message to prevent the audio que
 agent-notify/
 ├── lib/
 │   ├── notify.mjs      # CLI interface
-│   ├── mcp.mjs         # MCP server (notify + get_messages tools)
+│   ├── mcp.mjs         # MCP server (notify, get_messages, check_message_status)
 │   └── server.mjs      # HTTP server (queue, endpoints, message store, TTS)
 ├── sounds/             # Audio files
 ├── .message-store.json # Persistent message stream (auto-generated)
