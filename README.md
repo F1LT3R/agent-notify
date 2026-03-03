@@ -314,7 +314,8 @@ mcp_agent-notify_notify({
   agentNumber: 2,                             // Optional: agent number (0 = orchestrator)
   voice: "Nathan",                            // Optional: TTS voice override
   model: "claude-4.6-sonnet",                  // Required: exact model identifier (console log only)
-  to: "Reviewer"                              // Optional: recipient for agent conversations
+  to: "Reviewer",                             // Optional: recipient for agent conversations
+  toProject: "shared-lib"                     // Optional: recipient's project (cross-project messaging)
 })
 ```
 
@@ -332,6 +333,7 @@ mcp_agent-notify_notify({
 | `voice` | string | No | Override the TTS voice for this notification. If omitted, the server selects a voice based on agentRole or agentNumber. |
 | `model` | string | Yes | Your exact model identifier as shown in system info (e.g., "claude-4.6-opus-high", "gpt-4o-2025-03"). Console log only. |
 | `to` | string | No | Agent role or name this message is directed to (e.g., "Reviewer", "Coder"). Used for agent-to-agent conversations. Display/filtering only — does not route messages. |
+| `toProject` | string | No | Project name the message is directed to, when targeting an agent in a different project. Derived from the recipient's workspaceDir basename. |
 
 #### 📬 MCP `get_messages` Tool
 
@@ -392,16 +394,36 @@ mcp_agent-notify_check_message_status({
 })
 ```
 
-**Response** (~30 tokens):
+**Response:**
 
 ```json
-{ "latest_id": 47, "played_id": 45, "muted": false, "has_new": true, "queue_length": 2 }
+{
+  "latest_id": 47,
+  "played_id": 45,
+  "muted": false,
+  "has_new": true,
+  "queue_length": 2,
+  "agents": [
+    {
+      "project": "my-app",
+      "agentRole": "Coder",
+      "agentNumber": 1,
+      "model": "claude-opus-4-6",
+      "voice": "Nathan",
+      "to": "Reviewer",
+      "toProject": "shared-lib",
+      "latestId": 47,
+      "played": false
+    }
+  ]
+}
 ```
 
 - `latest_id` — highest message ID in the store
 - `played_id` — highest message ID whose audio has finished playing
 - `has_new` — true if `latest_id > since_id`
 - `queue_length` — number of notifications waiting in the audio queue
+- `agents` — deduplicated array of agents that have posted since `since_id`. Each agent is identified by the composite key `project + agentRole + agentNumber`. Fields `model`, `voice`, `to`, and `toProject` reflect the agent's most recent message. `latestId` is that message's ID, and `played` is true if its audio has finished.
 
 Only use `get_messages` when you need actual message content.
 
@@ -470,6 +492,7 @@ curl "http://localhost:8881/notify/app?type=debug&message=Cache%20hit%20ratio%20
 | `agentNumber` | No | Agent number |
 | `voice` | No | TTS voice override |
 | `to` | No | Recipient agent role/name (for agent conversations, display/filtering only) |
+| `toProject` | No | Recipient's project name (for cross-project agent conversations) |
 
 #### 📦 `/notify/app` Parameters
 
