@@ -201,7 +201,7 @@ user-agent-notify-get_messages since_id=42
 ### Playback Tracking
 
 The `get_messages` response includes:
-- `played_id` — the highest message ID whose audio has finished playing
+- `last_played_id` — the highest message ID whose audio has finished playing
 - Each message has a `playedAt` field (null until audio finishes, then an ISO timestamp)
 
 Use these to know when a message has been heard by the user before sending the next one.
@@ -217,7 +217,7 @@ Use these to know when a message has been heard by the user before sending the n
 **Response:**
 ```json
 {
-  "latest_id": 47, "played_id": 45, "muted": false, "has_new": true, "queue_length": 2,
+  "latest_id": 47, "last_played_id": 45, "muted": false, "has_new": true, "queue_length": 2,
   "agents": [
     { "project": "my-app", "agentRole": "Coder", "agentNumber": 1, "model": "claude-opus-4-6", "voice": "Nathan", "to": "Reviewer", "latestId": 47, "played": false }
   ]
@@ -248,10 +248,10 @@ The orchestrator must wait for each message to finish playing before sending the
    user-agent-notify-notify type="message" to="Reviewer" message="..." agentRole="Coder" agentNumber=1 → id: 47
    ```
 
-2. **Wait** for audio to finish — poll `check_message_status` until `played_id >= 47`:
+2. **Wait** for audio to finish — poll `check_message_status` until `last_played_id >= 47`:
    ```
-   user-agent-notify-check_message_status since_id=46 → { played_id: 46, has_new: true }  # still playing
-   user-agent-notify-check_message_status since_id=46 → { played_id: 47, has_new: true }  # done — send next turn
+   user-agent-notify-check_message_status since_id=46 → { last_played_id: 46, has_new: true }  # still playing
+   user-agent-notify-check_message_status since_id=46 → { last_played_id: 47, has_new: true }  # done — send next turn
    ```
 
 3. **Send the next turn** on behalf of the other agent, only after the previous message has been played.

@@ -374,12 +374,12 @@ mcp_agent-notify_get_messages({
     }
   ],
   "latest_id": 47,
-  "played_id": 47
+  "last_played_id": 47
 }
 ```
 
 - `latest_id` — highest message ID in the store (use as `since_id` for next poll)
-- `played_id` — highest message ID whose audio has finished playing
+- `last_played_id` — highest message ID whose audio has finished playing
 - `playedAt` — ISO timestamp when audio finished (null until played)
 
 #### ⚡ MCP `check_message_status` Tool
@@ -397,7 +397,7 @@ mcp_agent-notify_check_message_status({
 ```json
 {
   "latest_id": 47,
-  "played_id": 45,
+  "last_played_id": 45,
   "muted": false,
   "has_new": true,
   "queue_length": 2,
@@ -417,7 +417,7 @@ mcp_agent-notify_check_message_status({
 ```
 
 - `latest_id` — highest message ID in the store
-- `played_id` — highest message ID whose audio has finished playing
+- `last_played_id` — highest message ID whose audio has finished playing
 - `has_new` — true if `latest_id > since_id`
 - `queue_length` — number of notifications waiting in the audio queue
 - `agents` — deduplicated array of agents that have posted since `since_id`. Each agent is identified by the composite key `project + agentRole + agentNumber`. Fields `model`, `voice`, and `to` reflect the agent's most recent message. `latestId` is that message's ID, and `played` is true if its audio has finished.
@@ -770,7 +770,7 @@ Use `since_id` for efficient incremental polling:
 ```bash
 # Initial fetch
 curl "http://localhost:8881/messages?since_id=0"
-# → { "messages": [...], "latest_id": 42, "played_id": 42 }
+# → { "messages": [...], "latest_id": 42, "last_played_id": 42 }
 
 # Next poll — only new messages
 curl "http://localhost:8881/messages?since_id=42"
@@ -782,7 +782,7 @@ curl "http://localhost:8881/messages?since_id=42"
 
 The message stream tracks audio playback state:
 
-- **`played_id`** — the highest message ID whose audio has finished playing
+- **`last_played_id`** — the highest message ID whose audio has finished playing
 - **`playedAt`** — per-message ISO timestamp (null until audio finishes, then set)
 
 Use these to know when a message has been heard before sending the next one. This is the foundation for the [turn-taking protocol](#turn-taking-protocol).
@@ -813,10 +813,10 @@ The orchestrator must wait for each message to finish playing before sending the
    notify(type="message", to="Reviewer", message="...", agentRole="Coder", agentNumber=1) → id: 47
    ```
 
-2. **Wait** for audio to finish — poll `check_message_status` until `played_id >= 47`:
+2. **Wait** for audio to finish — poll `check_message_status` until `last_played_id >= 47`:
    ```
-   check_message_status(since_id=46) → { played_id: 46, has_new: true }  # still playing
-   check_message_status(since_id=46) → { played_id: 47, has_new: true }  # done — send next turn
+   check_message_status(since_id=46) → { last_played_id: 46, has_new: true }  # still playing
+   check_message_status(since_id=46) → { last_played_id: 47, has_new: true }  # done — send next turn
    ```
 
 3. **Send the next turn** on behalf of the other agent, only after the previous message has been played.
