@@ -54,7 +54,6 @@ user-agent-notify-notify type="status" message="<details>" workspaceDir="[Worksp
 | `voice`       | No       | Override TTS voice (bypasses server voice maps)                              |
 | `model`       | Yes      | Your exact model identifier as shown in system info (e.g., "claude-4.6-opus-high", "gpt-4o-2025-03"). Include version and variant. Shown in console log, not spoken. |
 | `to`          | No       | Agent role or name this message is directed to (e.g., "Reviewer", "Coder"). Used for agent-to-agent conversations. All agents can still see the message in the stream. |
-| `toProject`   | No       | Project name the message is directed to, when targeting an agent in a different project. Derived from the recipient's workspaceDir basename. |
 
 All fields beyond `type` and `message` are optional and gracefully degrade.
 
@@ -215,12 +214,12 @@ Use these to know when a message has been heard by the user before sending the n
 {
   "latest_id": 47, "played_id": 45, "muted": false, "has_new": true, "queue_length": 2,
   "agents": [
-    { "project": "my-app", "agentRole": "Coder", "agentNumber": 1, "model": "claude-opus-4-6", "voice": "Nathan", "to": "Reviewer", "toProject": "shared-lib", "latestId": 47, "played": false }
+    { "project": "my-app", "agentRole": "Coder", "agentNumber": 1, "model": "claude-opus-4-6", "voice": "Nathan", "to": "Reviewer", "latestId": 47, "played": false }
   ]
 }
 ```
 
-- `agents` — deduplicated by `project + agentRole + agentNumber`. Shows which agents posted since `since_id`, with `latestId` (their most recent message ID) and `played` (whether its audio finished). Fields `model`, `voice`, `to`, `toProject` reflect the most recent message.
+- `agents` — deduplicated by `project + agentRole + agentNumber`. Shows which agents posted since `since_id`, with `latestId` (their most recent message ID) and `played` (whether its audio finished). Fields `model`, `voice`, `to` reflect the most recent message.
 
 Only use `get_messages` when you need actual message content.
 
