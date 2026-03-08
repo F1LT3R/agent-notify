@@ -1011,7 +1011,8 @@ The `/messages` response includes a `muted` field so all panels stay in sync wit
 
 - No audio playback — display only
 - No notification queue — read-only polling
-- Never writes to the message store — completely passive
+- Never loads, reads, or writes the message store — completely passive
+- Never shows store confirmation prompts — store decisions are server-only
 - Never writes to `/notify/*` — read-only
 
 <a id="keyboard-controls"></a>
@@ -1052,9 +1053,10 @@ The message store lives in a `.agent-notify/` directory as an append-only JSONL 
 - **Startup safety** — timestamped backup created on each startup; CLI confirmation prompt before accepting the store (`--yes` to skip)
 - **Crash-safe** — no periodic flush, no full-file rewrites; every message is appended immediately
 - **Store directory** — defaults to `.agent-notify/` in project root; configurable via `--store <dir>` or `$AGENT_NOTIFY_STORE` env var
-- **Clear history** — `--clear` flag deletes the store and starts fresh
+- **Clear history** — `--clear` flag deletes the store after confirmation (`--yes --clear` to skip prompt)
 - **Auto-migration** — both `.message-store.json` (old blob format) and `.message-store.jsonl` (old flat file) are migrated into `.agent-notify/` automatically on first run
-- **Watch mode safety** — only the primary server (port-bound process) writes to the store; watch mode and EADDRINUSE fallbacks are read-only
+- **Watch mode safety** — only the primary server (port-bound process) loads or writes the store; watch mode and EADDRINUSE fallbacks never touch the store, never show prompts
+- **Sticky store link** — clickable OSC8 link to the store file always visible at the bottom of the terminal
 
 <a id="development"></a>
 
