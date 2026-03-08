@@ -59,6 +59,7 @@ user-agent-notify-notify type="status" message="<details>" workspaceDir="[Worksp
 | `voice`       | No       | Override TTS voice (bypasses server voice maps)                              |
 | `model`       | Yes      | Your exact model identifier as shown in system info (e.g., "claude-4.6-opus-high", "gpt-4o-2025-03"). Include version and variant. Shown in console log, not spoken. |
 | `to`          | No       | Agent role or name this message is directed to (e.g., "Reviewer", "Coder"). Used for agent-to-agent conversations. All agents can still see the message in the stream. |
+| `response_to` | No       | Message ID this is a reply to. Enables lightweight response polling via `check_responses_available` and `check_responses_observed`. |
 
 All fields beyond `type` and `message` are optional and gracefully degrade.
 
@@ -227,6 +228,53 @@ Use these to know when a message has been heard by the user before sending the n
 - `agents` — deduplicated by `project + agentRole + agentNumber`. Shows which agents posted since `since_id`, with `latestId` (their most recent message ID) and `played` (whether its audio finished). Fields `model`, `voice`, `to` reflect the most recent message.
 
 Only use `get_messages` when you need actual message content.
+
+## Response Polling (Lightweight Turn-Taking)
+
+For agent-to-agent conversations, use response polling instead of `check_message_status` to save tokens (~5 tokens per poll vs ~50-100).
+
+### How it works
+
+1. When replying to a message, pass `response_to=<id>` in your `notify` call
+2. The other agent polls for your response using one of two modes
+
+### Bus mode: `user-agent-notify-check_responses_available`
+
+"Has a reply been sent?" — doesn't care if the human heard it. Use for task handoffs, status updates, anything where audio doesn't matter.
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `id`      | Yes      | Message ID to check for responses to |
+
+**Response:** `{"n":1}` or `{"n":0}`
+
+### Conversational mode: `user-agent-notify-check_responses_observed`
+
+"Has the reply been heard?" — only counts responses whose audio has been played. Use for debates, turn-taking, anything where timing matters.
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `id`      | Yes      | Message ID to check for observed responses to |
+
+**Response:** `{"n":1}` or `{"n":0}`
+
+### Flow
+
+1. **Send** with `response_to` pointing at the message you're replying to:
+   ```
+   user-agent-notify-notify type="message" message="..." response_to=225 → id: 226
+   ```
+
+2. **Other agent polls** (every 30s):
+   ```
+   user-agent-notify-check_responses_observed id=226 → {"n":0}  # not heard yet
+   user-agent-notify-check_responses_observed id=226 → {"n":1}  # heard — proceed
+   ```
+
+3. **Read reply content** (if needed):
+   ```
+   user-agent-notify-get_messages response_to=226
+   ```
 
 ## Agent-to-Agent Conversations
 

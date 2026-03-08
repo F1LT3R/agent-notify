@@ -78,14 +78,18 @@ Agent (HTTP/CLI) ──▶  HTTP /notify/agent  ──────────�
                                                                      │
 App (HTTP/CLI)   ──▶  HTTP /notify/app  ────────────────────────────┘
 
-Agent (MCP)      ──▶  MCP tool "get_messages"          ──▶  HTTP /messages         ──▶  message store (read)
-Agent (MCP)      ──▶  MCP tool "check_message_status"  ──▶  HTTP /messages/status  ──▶  counters only (read)
+Agent (MCP)      ──▶  MCP tool "get_messages"                ──▶  HTTP /messages                       ──▶  message store (read)
+Agent (MCP)      ──▶  MCP tool "check_message_status"       ──▶  HTTP /messages/status                ──▶  counters only (read)
+Agent (MCP)      ──▶  MCP tool "check_responses_available"  ──▶  HTTP /responses/available/for/id/:id  ──▶  message store (count)
+Agent (MCP)      ──▶  MCP tool "check_responses_observed"   ──▶  HTTP /responses/observed/for/id/:id   ──▶  message store (count)
 ```
 
 - **`/notify/agent`** — for all AI agent notifications (MCP, HTTP, or CLI). Always plays audio and logs to console.
 - **`/notify/app`** — for all application notifications (HTTP or CLI). Subject to log level thresholds.
 - **`/messages`** — query the persistent message stream. Supports incremental polling and playback tracking.
-- **Three MCP tools** — `notify` (send notifications), `get_messages` (poll the message stream), and `check_message_status` (lightweight counters for turn-taking).
+- **`/responses/available/for/id/:id`** — count responses to a message (bus mode, ~5 tokens)
+- **`/responses/observed/for/id/:id`** — count observed responses (conversational mode, ~5 tokens)
+- **Five MCP tools** — `notify`, `get_messages`, `check_message_status`, `check_responses_available`, `check_responses_observed`.
 - **One CLI** — `notify` command. If `--app` flag is present → `/notify/app`; otherwise → `/notify/agent`.
 - **One queue** — both endpoints feed into the same FIFO queue. Sequential playback, no overlap.
 - **One message store** — every notification is persisted. Survives server restarts.
@@ -314,7 +318,8 @@ mcp_agent-notify_notify({
   agentNumber: 2,                             // Optional: agent number (0 = orchestrator)
   voice: "Nathan",                            // Optional: TTS voice override
   model: "claude-4.6-sonnet",                  // Required: exact model identifier (console log only)
-  to: "Reviewer"                              // Optional: recipient for agent conversations
+  to: "Reviewer",                             // Optional: recipient for agent conversations
+  response_to: 225                            // Optional: message ID this is a reply to
 })
 ```
 
@@ -332,6 +337,7 @@ mcp_agent-notify_notify({
 | `voice` | string | No | Override the TTS voice for this notification. If omitted, the server selects a voice based on agentRole or agentNumber. |
 | `model` | string | Yes | Your exact model identifier as shown in system info (e.g., "claude-4.6-opus-high", "gpt-4o-2025-03"). Console log only. |
 | `to` | string | No | Agent role or name this message is directed to (e.g., "Reviewer", "Coder"). Used for agent-to-agent conversations. Display/filtering only — does not route messages. |
+| `response_to` | integer | No | Message ID this is a reply to. Enables lightweight response polling via `check_responses_available` and `check_responses_observed`. |
 
 #### 📬 MCP `get_messages` Tool
 
@@ -424,6 +430,30 @@ mcp_agent-notify_check_message_status({
 
 Only use `get_messages` when you need actual message content.
 
+#### ⚡ MCP `check_responses_available` Tool
+
+Check if any responses have been sent to a specific message. Returns a count. Use for **bus-mode polling** — you only need to know if a reply exists, regardless of whether the human has heard it.
+
+```javascript
+mcp_agent-notify_check_responses_available({
+  id: 225   // Required: the message ID to check for responses to
+})
+```
+
+**Response:** `{"n":1}` (~5 tokens)
+
+#### ⚡ MCP `check_responses_observed` Tool
+
+Check if any responses to a specific message have been heard by the human (audio played). Returns a count. Use for **conversational-mode polling** — wait for the human to actually hear the reply before proceeding.
+
+```javascript
+mcp_agent-notify_check_responses_observed({
+  id: 225   // Required: the message ID to check for observed responses to
+})
+```
+
+**Response:** `{"n":0}` (~5 tokens)
+
 <a id="http-api"></a>
 
 ### 🌐 HTTP API
@@ -489,6 +519,7 @@ curl "http://localhost:8881/notify/app?type=debug&message=Cache%20hit%20ratio%20
 | `agentNumber` | No | Agent number |
 | `voice` | No | TTS voice override |
 | `to` | No | Recipient agent role/name (for agent conversations, display/filtering only) |
+| `response_to` | No | Message ID this is a reply to. Enables lightweight response polling. |
 
 #### 📦 `/notify/app` Parameters
 
@@ -515,6 +546,7 @@ curl "http://localhost:8881/notify/app?type=debug&message=Cache%20hit%20ratio%20
 | `model` | No | Filter by model identifier |
 | `voice` | No | Filter by TTS voice |
 | `app` | No | Filter by app name |
+| `response_to` | No | Filter to messages that are replies to this message ID |
 
 ```bash
 # Get all recent messages
@@ -525,6 +557,32 @@ curl "http://localhost:8881/messages?since_id=42"
 
 # Filter by type and recipient
 curl "http://localhost:8881/messages?type=message&to=Coder"
+```
+
+#### 🔄 `/responses/available/for/id/:id`
+
+Count responses to a message (bus mode — all sent, regardless of playback).
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `:id` (path) | Yes | Message ID to check for responses to |
+
+```bash
+curl "http://localhost:8881/responses/available/for/id/225"
+# → {"n":1}
+```
+
+#### 🔄 `/responses/observed/for/id/:id`
+
+Count observed responses to a message (conversational mode — only those whose audio has been played).
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `:id` (path) | Yes | Message ID to check for observed responses to |
+
+```bash
+curl "http://localhost:8881/responses/observed/for/id/225"
+# → {"n":0}
 ```
 
 <a id="programmatic-usage"></a>
@@ -828,6 +886,28 @@ The orchestrator must wait for each message to finish playing before sending the
 - Use `type="message"` for conversation turns; reserve other types for their intended purpose.
 - The `to` parameter indicates who the message is addressed to (for display/filtering) — it does not route or deliver messages.
 
+#### Lightweight Turn-Taking (response polling)
+
+For agent-to-agent conversations where each agent independently polls for replies:
+
+1. **Agent A sends** with `response_to` pointing at the message it's replying to:
+   ```
+   notify(type="message", message="...", response_to=225) → id: 226
+   ```
+
+2. **Agent B polls** for available or observed responses:
+   ```
+   check_responses_observed(id=226) → {"n":0}  # not heard yet
+   check_responses_observed(id=226) → {"n":1}  # reply heard — proceed
+   ```
+
+3. **Agent B reads the reply** (if content needed):
+   ```
+   get_messages(response_to=226)
+   ```
+
+This uses ~5 tokens per poll instead of ~50-100 with `check_message_status`.
+
 <a id="voice-system"></a>
 
 ## 🎙️ Voice System
@@ -962,8 +1042,6 @@ The message store is persisted to `.message-store.json` in the project root. Thi
 - **Automatic compaction** — the store holds up to 500 messages; older messages are discarded
 - **Periodic flush** — the store is saved to disk every 50 messages, and on graceful shutdown (Ctrl+C or SIGTERM)
 
-The TTS system includes a 72-second timeout per message to prevent the audio queue from stalling if the macOS `say` command fails to return.
-
 <a id="development"></a>
 
 ## 🛠️ Development
@@ -974,7 +1052,7 @@ The TTS system includes a 72-second timeout per message to prevent the audio que
 agent-notify/
 ├── lib/
 │   ├── notify.mjs      # CLI interface
-│   ├── mcp.mjs         # MCP server (notify, get_messages, check_message_status)
+│   ├── mcp.mjs         # MCP server (notify, get_messages, check_message_status, check_responses_available, check_responses_observed)
 │   └── server.mjs      # HTTP server (queue, endpoints, message store, TTS)
 ├── sounds/             # Audio files
 ├── .message-store.json # Persistent message stream (auto-generated)
