@@ -197,10 +197,9 @@ user-agent-notify-get_messages since_id=42
 ### Playback Tracking
 
 The `get_messages` response includes:
-- `last_played_id` — the highest message ID whose audio has finished playing
-- Each message has a `playedAt` field (null until audio finishes, then an ISO timestamp)
+- `last_played_id` — the highest message ID whose audio has finished playing (derived from internal played events)
 
-Use these to know when a message has been heard by the user before sending the next one.
+Use this to know when a message has been heard by the user before sending the next one. Played events are internal bookkeeping and are filtered out of `get_messages` results.
 
 ## Lightweight Status Check: `user-agent-notify-check_message_status`
 
@@ -301,7 +300,7 @@ The orchestrator must wait for each message to finish playing before sending the
 
 **Important:** The orchestrator waits for each message's `id`, not for the queue to be empty. This means multiple conversations (e.g., two debates in separate windows) can run simultaneously without blocking each other — they interleave in audio output but each progresses at its own pace.
 
-**When the user skips audio** (spacebar or skip key), all queued messages get `playedAt` set immediately, so the orchestrator proceeds without getting stuck.
+**When the user skips audio** (spacebar or skip key), all queued messages are marked as played immediately, so the orchestrator proceeds without getting stuck.
 
 ### Key Points
 

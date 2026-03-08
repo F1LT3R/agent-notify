@@ -5,3 +5,7 @@ node_modules/
 .cursor:*
 .vscode/
 .message-store.json
+.message-store.jsonl
+.message-store.jsonl.meta
+.message-store.jsonl.pre-start.*
+.agent-notify/

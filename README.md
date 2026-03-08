@@ -367,7 +367,7 @@ mcp_agent-notify_get_messages({
     {
       "id": 47,
       "timestamp": "2025-03-01T04:40:07.000Z",
-      "playedAt": "2025-03-01T04:40:35.000Z",
+      "prevHash": "a3f2c1e809b7d4f2",
       "source": "agent",
       "type": "message",
       "message": "Build complete",
@@ -385,8 +385,8 @@ mcp_agent-notify_get_messages({
 ```
 
 - `latest_id` — highest message ID in the store (use as `since_id` for next poll)
-- `last_played_id` — highest message ID whose audio has finished playing
-- `playedAt` — ISO timestamp when audio finished (null until played)
+- `last_played_id` — highest message ID whose audio has finished playing (derived from internal played events)
+- Played events (`type: "played"`) are filtered out of results — they are internal bookkeeping
 
 #### ⚡ MCP `check_message_status` Tool
 
@@ -481,6 +481,15 @@ node lib/server.mjs --address localhost:8881
 
 # Watch mode — display only, no audio (auto-detects or explicit)
 node lib/server.mjs --watch
+
+# Custom store directory
+node lib/server.mjs --store /path/to/store-dir
+
+# Skip startup confirmation prompt
+node lib/server.mjs --yes
+
+# Clear message history and start fresh
+node lib/server.mjs --clear
 ```
 
 **🌍 Network Access:**
@@ -840,10 +849,9 @@ curl "http://localhost:8881/messages?since_id=42"
 
 The message stream tracks audio playback state:
 
-- **`last_played_id`** — the highest message ID whose audio has finished playing
-- **`playedAt`** — per-message ISO timestamp (null until audio finishes, then set)
+- **`last_played_id`** — the highest message ID whose audio has finished playing (derived from internal played events)
 
-Use these to know when a message has been heard before sending the next one. This is the foundation for the [turn-taking protocol](#turn-taking-protocol).
+Use this to know when a message has been heard before sending the next one. This is the foundation for the [turn-taking protocol](#turn-taking-protocol).
 
 <a id="agent-to-agent-conversations"></a>
 
@@ -882,7 +890,7 @@ The orchestrator must wait for each message to finish playing before sending the
 **Key details:**
 
 - The orchestrator waits for each message's `id`, not for the queue to be empty. Multiple conversations can run simultaneously without blocking each other.
-- When the user skips audio (spacebar), all queued messages get `playedAt` set immediately, so the orchestrator proceeds without getting stuck.
+- When the user skips audio (spacebar), all queued messages are marked as played immediately, so the orchestrator proceeds without getting stuck.
 - Use `type="message"` for conversation turns; reserve other types for their intended purpose.
 - The `to` parameter indicates who the message is addressed to (for display/filtering) — it does not route or deliver messages.
 
@@ -1003,7 +1011,8 @@ The `/messages` response includes a `muted` field so all panels stay in sync wit
 
 - No audio playback — display only
 - No notification queue — read-only polling
-- Never writes to `/notify/*` — completely passive
+- Never writes to the message store — completely passive
+- Never writes to `/notify/*` — read-only
 
 <a id="keyboard-controls"></a>
 
@@ -1035,12 +1044,17 @@ The system uses predefined sound files located in the `sounds/` directory:
 
 ## 💾 Message Persistence
 
-The message store is persisted to `.message-store.json` in the project root. This ensures:
+The message store lives in a `.agent-notify/` directory as an append-only JSONL file (`messages.jsonl`). Each message is written immediately — zero data loss on crash.
 
-- **Messages survive server restarts** — the stream is reloaded on startup
-- **Playback state recovery** — on restart, any unplayed messages from the previous session are automatically marked as played, so polling orchestrators don't get stuck waiting
-- **Automatic compaction** — the store holds up to 500 messages; older messages are discarded
-- **Periodic flush** — the store is saved to disk every 50 messages, and on graceful shutdown (Ctrl+C or SIGTERM)
+- **Messages survive server restarts** — the last 10,000 lines are loaded into memory on startup
+- **Hash chain integrity** — each message stores a `prevHash` linking to the previous message; verified on startup to detect corruption
+- **Playback as events** — playback state is tracked via append-only `played` events (no mutations)
+- **Startup safety** — timestamped backup created on each startup; CLI confirmation prompt before accepting the store (`--yes` to skip)
+- **Crash-safe** — no periodic flush, no full-file rewrites; every message is appended immediately
+- **Store directory** — defaults to `.agent-notify/` in project root; configurable via `--store <dir>` or `$AGENT_NOTIFY_STORE` env var
+- **Clear history** — `--clear` flag deletes the store and starts fresh
+- **Auto-migration** — both `.message-store.json` (old blob format) and `.message-store.jsonl` (old flat file) are migrated into `.agent-notify/` automatically on first run
+- **Watch mode safety** — only the primary server (port-bound process) writes to the store; watch mode and EADDRINUSE fallbacks are read-only
 
 <a id="development"></a>
 
@@ -1055,7 +1069,9 @@ agent-notify/
 │   ├── mcp.mjs         # MCP server (notify, get_messages, check_message_status, check_responses_available, check_responses_observed)
 │   └── server.mjs      # HTTP server (queue, endpoints, message store, TTS)
 ├── sounds/             # Audio files
-├── .message-store.json # Persistent message stream (auto-generated)
+├── .agent-notify/            # Store directory (auto-generated, gitignored)
+│   ├── messages.jsonl        # Append-only message stream
+│   └── messages.jsonl.meta   # Sidecar metadata
 ├── package.json
 └── README.md
 ```
