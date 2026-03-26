@@ -537,6 +537,8 @@ curl "http://localhost:8881/notify/app?type=debug&message=Cache%20hit%20ratio%20
 | `type` | Yes | Log level (debug, info, warn, error, success) |
 | `message` | Yes | Message text |
 | `app` | Yes | App name (e.g., "webpack", "jest", "github-actions") |
+| `workspaceDir` | No | Full workspace path (project name derived from last segment) |
+| `detail` | No | Short context that doesn't belong in the message (e.g., "src/auth", "3 files") |
 | `voice` | No | TTS voice override |
 | `url` | No | URL to attach as clickable link (not spoken, visual only) |
 
@@ -693,11 +695,18 @@ fi
 #### 🌐 curl (HTTP)
 
 ```bash
-# App notification with link
-curl "http://localhost:8881/notify/app?type=success&message=Pipeline%20complete&app=github-actions&url=https://github.com/user/repo/actions/runs/12345"
+# App notification with project, detail, and link
+curl "http://localhost:8881/notify/app?\
+type=success&message=Pipeline%20complete\
+&app=github-actions\
+&workspaceDir=/Users/user/repos/my-app\
+&detail=deploy-prod\
+&url=https://github.com/user/repo/actions/runs/12345"
 
-# App notification without link
-curl "http://localhost:8881/notify/app?type=success&message=Pipeline%20complete&app=github-actions"
+# App notification without project
+curl "http://localhost:8881/notify/app?\
+type=success&message=Pipeline%20complete\
+&app=github-actions"
 
 # Agent notification (links not supported for security)
 curl "http://localhost:8881/notify/agent?type=done&message=Build%20complete&model=claude-4.6-opus-high"
@@ -751,14 +760,14 @@ Emoji-led format with notification type capitalized. Message displayed in dim te
 #### 📦 App Notifications
 
 ```shell
-✅ SUCCESS 📦 webpack
+ℹ️ INFO 📦 webpack 📂 my-app ⚙️ src/index.ts
+"Build started"
+
+✅ SUCCESS 📦 webpack 📂 my-app
 "Build complete in 4.2s"
 
-❌ ERROR 📦 jest
-"3 tests failed in auth.test.ts"
-
-ℹ️ INFO 📦 deploy
-"Starting deployment to staging"
+❌ ERROR 📦 jest 📂 my-app ⚙️ auth.test.ts
+"3 tests failed"
 
 ⚠️ WARN 📦 eslint
 "12 warnings found"
@@ -767,15 +776,15 @@ Emoji-led format with notification type capitalized. Message displayed in dim te
 "Module resolution: ./src/index.ts → ./dist/index.js"
 
 # With optional link (3-line format):
-✅ SUCCESS 📦 my-api
+✅ SUCCESS 📦 my-api 📂 my-api
 "Deploy complete"
 🔗 https://my-api.example.com/health
 ```
 
-- `📦` emoji for app source (vs `🤖` for agents)
+- `📦` app name always shown
+- `📂` project folder shown when `workspaceDir` is provided
+- `⚙️` detail shown when `detail` is provided
 - No model field (apps don't have models)
-- No project folder (workspaceDir not supported for apps)
-- `app` name shown where agent role would be
 
 <a id="tts-spoken-order"></a>
 
@@ -800,7 +809,14 @@ The notification sound and TTS speech run independently and in parallel. The sou
 
 1. **Log level** (e.g., "success", "error")
 2. **App name** (e.g., "webpack")
-3. **Message text**
+3. **Project name** (from `workspaceDir` last segment — omitted if not provided)
+4. **Detail** (omitted if not provided)
+5. **Message text**
+
+**Examples:**
+- `"success, webpack, my-app, src/auth, Build complete"` — full context
+- `"success, webpack, my-app, Build complete"` — with project, no detail
+- `"success, webpack, Build complete"` — minimal
 
 **Note:** The optional `url` parameter is **not** spoken via TTS. URLs are visual-only in the console output.
 
