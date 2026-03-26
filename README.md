@@ -283,6 +283,8 @@ notify debug "Cache hit ratio 95%" --app webpack
 | `--voice` | `voice` | TTS voice override |
 | `--model` | `model` | Your exact model identifier (e.g., "claude-4.6-opus-high") (agent notifications only) |
 | `--app` | `app` | App name — routes to `/notify/app` endpoint |
+| `--project` | `project` | Project name (app notifications only) |
+| `--detail` | `detail` | Short context info, e.g. file path or count (app notifications only) |
 | `--link` | `url` | Attach a clickable link to app notification (app notifications only, not spoken) |
 
 <a id="mcp-integration-cursor-ai"></a>
@@ -537,7 +539,7 @@ curl "http://localhost:8881/notify/app?type=debug&message=Cache%20hit%20ratio%20
 | `type` | Yes | Log level (debug, info, warn, error, success) |
 | `message` | Yes | Message text |
 | `app` | Yes | App name (e.g., "webpack", "jest", "github-actions") |
-| `workspaceDir` | No | Full workspace path (project name derived from last segment) |
+| `project` | No | Project name (e.g., "my-app") |
 | `detail` | No | Short context that doesn't belong in the message (e.g., "src/auth", "3 files") |
 | `voice` | No | TTS voice override |
 | `url` | No | URL to attach as clickable link (not spoken, visual only) |
@@ -699,7 +701,7 @@ fi
 curl "http://localhost:8881/notify/app?\
 type=success&message=Pipeline%20complete\
 &app=github-actions\
-&workspaceDir=/Users/user/repos/my-app\
+&project=my-app\
 &detail=deploy-prod\
 &url=https://github.com/user/repo/actions/runs/12345"
 
@@ -809,7 +811,7 @@ The notification sound and TTS speech run independently and in parallel. The sou
 
 1. **Log level** (e.g., "success", "error")
 2. **App name** (e.g., "webpack")
-3. **Project name** (from `workspaceDir` last segment — omitted if not provided)
+3. **Project name** (omitted if not provided)
 4. **Detail** (omitted if not provided)
 5. **Message text**
 
