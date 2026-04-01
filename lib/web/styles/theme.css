@@ -51,6 +51,17 @@ html {
   --an-scanline: transparent;
 }
 
+an-status-bar,
+an-compose {
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
+an-message-list {
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
 body {
   font-family: 'DM Sans', -apple-system, BlinkMacSystemFont,
     sans-serif;

@@ -60,7 +60,9 @@
 - 🔄 **Notification Queue** - Sequential playback — notifications never overlap
 - 💬 **Message Stream** - Persistent message store with incremental polling and playback tracking
 - 🤝 **Agent Conversations** - Orchestrator-driven agent-to-agent audio conversations with turn-taking
-- 📊 **Log Levels** - Configurable console and audio thresholds for app notifications
+- 🌐 **Web UI** - Phone-friendly dashboard at `localhost:8881` with dark/light theme toggle
+- 🧑‍💻 **Operator Messaging** - Human-in-the-loop messages to agents via web UI or API
+- 📊 **Log Levels** - Configurable audio thresholds for app notifications (console always shows all)
 - ⌨️ **Keyboard Control** - Spacebar to stop all, S to skip current, M to mute all audio
 - 👁️ **Watch Mode** - Display-only panels that mirror notifications without playing audio
 - 🔗 **Synced Controls** - Mute, stop, and skip sync across all panels via remote control endpoints
@@ -544,16 +546,31 @@ curl "http://localhost:8881/notify/app?type=debug&message=Cache%20hit%20ratio%20
 | `voice` | No | TTS voice override |
 | `url` | No | URL to attach as clickable link (not spoken, visual only) |
 
+#### 🧑‍💻 `POST /notify/operator` (JSON body)
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `message` | Yes | Message text |
+| `to` | No | Target agent role (e.g., "Coder") |
+| `project` | No | Target project name |
+| `voice` | No | TTS voice override (default: Daniel) |
+
+```bash
+curl -X POST http://localhost:8881/notify/operator \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"Focus on auth","to":"Coder"}'
+```
+
 #### 📬 `/messages` Parameters
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `since_id` | No | Return messages with ID greater than this (0 for initial fetch) |
-| `limit` | No | Max messages to return (default 50, max 200) |
+| `limit` | No | Max messages to return (default 50, max 2000) |
 | `type` | No | Filter by notification type |
 | `to` | No | Filter by recipient agent role/name |
 | `project` | No | Filter by project name |
-| `source` | No | Filter by source ("agent" or "app") |
+| `source` | No | Filter by source ("agent", "app", or "operator") |
 | `agentRole` | No | Filter by agent role |
 | `agentNumber` | No | Filter by agent number |
 | `model` | No | Filter by model identifier |
@@ -642,30 +659,30 @@ Apps use logger-style levels instead of agent notification types:
 
 ### 🎚️ Log Level Configuration
 
-Two server flags control what app notifications are shown and heard:
+Two server flags control which app notifications get **audio** (sound + TTS). All app messages are always shown in the terminal console and the web UI regardless of these flags.
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--log-level` | `info` | Minimum level to show in console. Below this, the notification is completely ignored. |
-| `--log-level-audio` | `info` | Minimum level to play sound + TTS. Below this, the notification is logged to console only (no audio, no queue entry). |
+| `--log-level` | `info` | Minimum level for audio playback. Below this, the notification is logged and stored but silent. |
+| `--log-level-audio` | `info` | Secondary audio threshold. Both flags must be met for audio to play. |
 
 **💡 Examples:**
 
 ```bash
-# Default: see and hear everything except debug
+# Default: all levels visible, info+ gets audio
 node lib/server.mjs
 
-# See everything in console, only hear warnings and above
-node lib/server.mjs --log-level debug --log-level-audio warn
+# Only hear warnings and above
+node lib/server.mjs --log-level warn
 
-# See and hear everything including debug
-node lib/server.mjs --log-level debug --log-level-audio debug
+# Hear everything including trace and debug
+node lib/server.mjs --log-level trace --log-level-audio trace
 
-# Only see and hear errors and successes
-node lib/server.mjs --log-level error --log-level-audio error
+# Only hear errors and successes
+node lib/server.mjs --log-level error
 ```
 
-**⚠️ Important:** Log level flags apply to app notifications only. Agent notifications always play audio and log to console regardless of these settings.
+**⚠️ Important:** Log level flags only control audio for app notifications. Console output and web UI always show all levels. Agent notifications always play audio regardless of these settings.
 
 ### 🔗 Example Integrations
 

@@ -182,7 +182,7 @@ Every notification sent via `notify` is stored in a persistent message stream. U
 | `type`        | No       | Filter by notification type                                                 |
 | `to`          | No       | Filter messages directed to this agent role/name                            |
 | `project`     | No       | Filter by project name (derived from workspaceDir)                          |
-| `source`      | No       | Filter by source: "agent" or "app"                                          |
+| `source`      | No       | Filter by source: "agent", "app", or "operator"                             |
 | `agentRole`   | No       | Filter by agent role (e.g., "Coder", "Reviewer")                            |
 | `agentNumber` | No       | Filter by agent number                                                      |
 | `model`       | No       | Filter by model identifier                                                  |
