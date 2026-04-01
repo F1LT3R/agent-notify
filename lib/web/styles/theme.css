@@ -1,0 +1,114 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ── Dark theme (default) ── */
+:root {
+  --an-bg: #080c14;
+  --an-bg-bar: #0c1222;
+  --an-bg-card: #0d1420;
+  --an-bg-input: #0a1020;
+  --an-border: #141e30;
+  --an-border-bright: #1a2540;
+  --an-text: #c0ccdd;
+  --an-text-dim: #6b7a92;
+  --an-text-muted: #3a4a60;
+  --an-brand: #d0d8e8;
+  --an-btn-bg: #162240;
+  --an-btn-border: #3a5070;
+  --an-btn-text: #c8d8f0;
+  --an-chip-bg: #0a1020;
+  --an-glow: 0.08;
+  --an-scanline: rgba(0, 10, 30, 0.03);
+}
+
+/* ── Light theme ── */
+:root.light {
+  --an-bg: #f0f2f5;
+  --an-bg-bar: #ffffff;
+  --an-bg-card: #ffffff;
+  --an-bg-input: #f5f7fa;
+  --an-border: #d8dee6;
+  --an-border-bright: #c0c8d4;
+  --an-text: #24292f;
+  --an-text-dim: #57606a;
+  --an-text-muted: #8b949e;
+  --an-brand: #24292f;
+  --an-btn-bg: #f0f3f6;
+  --an-btn-border: #c0c8d4;
+  --an-btn-text: #24292f;
+  --an-chip-bg: #eef1f5;
+  --an-glow: 0.04;
+  --an-scanline: transparent;
+}
+
+body {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont,
+    sans-serif;
+  background: var(--an-bg);
+  color: var(--an-text);
+  line-height: 1.5;
+  height: 100dvh;
+  overflow: hidden;
+  touch-action: manipulation;
+  display: flex;
+  flex-direction: column;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Subtle scan-line texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    var(--an-scanline) 2px,
+    var(--an-scanline) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--an-border);
+  border-radius: 3px;
+}
+
+/* Message entrance animation */
+@keyframes msg-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Connection dot pulse */
+@keyframes pulse-live {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(56, 203, 78, 0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(56, 203, 78, 0); }
+}
+
+/* Send button flash */
+@keyframes send-flash {
+  0% { box-shadow: 0 0 0 0 rgba(100, 180, 255, 0.5); }
+  100% { box-shadow: 0 0 0 8px rgba(100, 180, 255, 0); }
+}
