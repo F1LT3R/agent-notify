@@ -13,3 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Console format: `ℹ️ INFO 📦 app-name 📂 project-name ⚙️ detail`
 - Project and detail included in TTS spoken order and stored in message stream
 - CLI flags: `--project` and `--detail` for app notifications
+
+### Changed
+
+- Mute (M key / `/controls/mute`) now silences all audio — agents and apps, all types
+- Mute labels updated: "Audio muted" / "Audio unmuted" (was "Agent messages muted")

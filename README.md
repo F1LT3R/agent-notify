@@ -61,7 +61,7 @@
 - 💬 **Message Stream** - Persistent message store with incremental polling and playback tracking
 - 🤝 **Agent Conversations** - Orchestrator-driven agent-to-agent audio conversations with turn-taking
 - 📊 **Log Levels** - Configurable console and audio thresholds for app notifications
-- ⌨️ **Keyboard Control** - Spacebar to stop all, S to skip current, M to mute agent messages
+- ⌨️ **Keyboard Control** - Spacebar to stop all, S to skip current, M to mute all audio
 - 👁️ **Watch Mode** - Display-only panels that mirror notifications without playing audio
 - 🔗 **Synced Controls** - Mute, stop, and skip sync across all panels via remote control endpoints
 - 🌐 **HTTP API** - RESTful endpoints for external integrations
@@ -536,7 +536,7 @@ curl "http://localhost:8881/notify/app?type=debug&message=Cache%20hit%20ratio%20
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `type` | Yes | Log level (debug, info, warn, error, success) |
+| `type` | Yes | Log level (trace, debug, info, warn, error, success) |
 | `message` | Yes | Message text |
 | `app` | Yes | App name (e.g., "webpack", "jest", "github-actions") |
 | `project` | No | Project name (e.g., "my-app") |
@@ -629,13 +629,14 @@ Apps use logger-style levels instead of agent notification types:
 
 | Level | Sound | Emoji | Use Case |
 |-------|-------|-------|----------|
-| `debug` | *(none by default)* | 🐛 | Verbose debug info |
+| `trace` | *(none)* | 🔬 | Fine-grained tracing, function entry/exit |
+| `debug` | *(none)* | 🐛 | Verbose debug info |
 | `info` | status.mp3 | ℹ️ | General information, progress updates |
 | `warn` | waiting.mp3 | ⚠️ | Warnings, deprecations, non-critical issues |
 | `error` | error.mp3 | ❌ | Failures, crashes, critical issues |
 | `success` | done.mp3 | ✅ | Build complete, tests passed, deploy finished |
 
-**Hierarchy (lowest to highest):** `debug < info < warn < error < success`
+**Hierarchy (lowest to highest):** `trace < debug < info < warn < error < success`
 
 <a id="log-level-configuration"></a>
 
@@ -1021,7 +1022,7 @@ Keyboard controls work from any panel — watch mode sends commands to the prima
 |----------|--------|
 | `POST /controls/stop` | Stop all audio and clear the queue |
 | `POST /controls/skip` | Skip the current notification |
-| `POST /controls/mute` | Toggle mute for agent messages |
+| `POST /controls/mute` | Toggle mute for all audio |
 
 The `/messages` response includes a `muted` field so all panels stay in sync with the current mute state.
 
@@ -1043,7 +1044,7 @@ These controls work on both the primary server and any watch mode panel. In watc
 |-----|--------|
 | **Spacebar** | Stop current audio AND clear the entire queue (discard all pending notifications) |
 | **S** | Skip current notification, move to the next one in the queue |
-| **M** | Toggle mute for `message` type notifications (conversations). Other types still play. |
+| **M** | Toggle mute for all audio (agents and apps). Notifications still logged to console. |
 | **Ctrl+C** | Exit the server (or watch mode panel) |
 
 <a id="sound-files"></a>

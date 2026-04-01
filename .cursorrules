@@ -312,7 +312,7 @@ The orchestrator must wait for each message to finish playing before sending the
 - By default, the orchestrator controls both sides of the conversation — but agents *can* independently poll `get_messages` for cross-tool scenarios (e.g., bridging Cursor and Claude Code agents)
 - `to` indicates who the message is addressed to (for display/filtering) — it does not route or deliver messages
 - The user hears each agent in a distinct voice (Nathan for Coder, Samantha for Reviewer, etc.)
-- The user can press `[M]` to mute conversation audio while still seeing messages in the console
+- The user can press `[M]` to mute all audio while still seeing messages in the console
 - Use `type="message"` for conversation turns; reserve other types for their intended purpose
 
 ## Mode Availability
