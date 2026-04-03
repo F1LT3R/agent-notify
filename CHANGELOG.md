@@ -22,9 +22,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Web UI compose bar with agent picker dropdown and message input
 - 3-day message history with date separators (Today, Yesterday, weekday)
 - Message limit raised to 2000 (was 200)
+- SSE reconnect catchup and tab resume — fetches missed messages via `since_id` on reconnect or tab focus
+- Web Push Notifications via service worker — native OS notifications even with browser closed/screen off
+- Push auto-registers on first user click, permission prompt handled by browser
+- `GET /push/vapid-key`, `POST /push/subscribe`, `POST /push/unsubscribe` endpoints
+- VAPID keys auto-generated on first run, persisted to store directory
+- Requires `localhost` or HTTPS (e.g., Cloudflare Tunnel) — LAN IPs don't support push
 
 ### Changed
 
+- Replace deprecated `apple-mobile-web-app-capable` meta tag with `mobile-web-app-capable`
 - Mute (M key / `/controls/mute`) now silences all audio — agents and apps, all types
 - Mute labels updated: "Audio muted" / "Audio unmuted" (was "Agent messages muted")
 - `--log-level` and `--log-level-audio` now only control audio threshold — console always shows all app messages including trace/debug

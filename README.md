@@ -61,6 +61,7 @@
 - 💬 **Message Stream** - Persistent message store with incremental polling and playback tracking
 - 🤝 **Agent Conversations** - Orchestrator-driven agent-to-agent audio conversations with turn-taking
 - 🌐 **Web UI** - Phone-friendly dashboard at `localhost:8881` with dark/light theme toggle
+- 📲 **Web Push Notifications** - Native OS notifications via service worker, even with browser closed (requires `localhost` or HTTPS)
 - 🧑‍💻 **Operator Messaging** - Human-in-the-loop messages to agents via web UI or API
 - 📊 **Log Levels** - Configurable audio thresholds for app notifications (console always shows all)
 - ⌨️ **Keyboard Control** - Spacebar to stop all, S to skip current, M to mute all audio
