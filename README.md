@@ -1174,6 +1174,16 @@ curl "http://localhost:8881/notify/app?type=success&message=Test&app=test"
 - 🟢 Node.js 18+
 - 🔊 Audio output capability
 
+<a id="pi-extension"></a>
+
+## 🧩 Pi Coding Agent Extension
+
+[pi-agent-notify](https://github.com/F1LT3R/pi-agent-notify) is the Pi Coding Agent extension for this system — it registers the `notify`, `get_messages`, `check_message_status`, and `check_responses_*` tools that agents use to send alerts here (TTS playback, dashboard, iTerm2 inline images).
+
+- Extension repo: <https://github.com/F1LT3R/pi-agent-notify>
+- npm package: `pi-agent-notify`
+- Config: `AGENT_NOTIFY_URL` (default `http://localhost:8881`)
+
 <a id="license"></a>
 
 ## 📄 License
