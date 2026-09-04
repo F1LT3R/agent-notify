@@ -113,6 +113,7 @@ Agent (MCP)      ──▶  MCP tool "check_responses_observed"   ──▶  HTT
 | `waiting` | ⏳ | Processing | Long-running tasks |
 | `review` | 👁️ | Code review needed | File changes ready |
 | `message` | 💬 | Agent conversation | Agent-to-agent dialogue |
+| `image` | 🖼️ | Inline terminal image (iTerm2) | Image generation previews, screenshots |
 
 ### 📦 App Log Levels
 
@@ -324,7 +325,8 @@ mcp_agent-notify_notify({
   voice: "Nathan",                            // Optional: TTS voice override
   model: "claude-4.6-sonnet",                  // Required: exact model identifier (console log only)
   to: "Reviewer",                             // Optional: recipient for agent conversations
-  response_to: 225                            // Optional: message ID this is a reply to
+  response_to: 225,                           // Optional: message ID this is a reply to
+  image: "/abs/path/to/image.png"             // Optional: image rendered inline in iTerm2 (any type)
 })
 ```
 
@@ -334,7 +336,7 @@ mcp_agent-notify_notify({
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `type` | string | Yes | Notification type: question, permission, done, error, status, waiting, review, message |
+| `type` | string | Yes | Notification type: question, permission, done, error, status, waiting, review, message, image |
 | `message` | string | Yes | Message to vocalize |
 | `workspaceDir` | string | No | The Workspace Path from `<user_info>`. Used to identify which project this notification is from. |
 | `agentRole` | string | No | Agent role name assigned by orchestrator (e.g., "Coder", "Reviewer"). The orchestrator itself should use "Orchestrator". |
@@ -343,6 +345,7 @@ mcp_agent-notify_notify({
 | `model` | string | Yes | Your exact model identifier as shown in system info (e.g., "claude-4.6-opus-high", "gpt-4o-2025-03"). Console log only. |
 | `to` | string | No | Agent role or name this message is directed to (e.g., "Reviewer", "Coder"). Used for agent-to-agent conversations. Display/filtering only — does not route messages. |
 | `response_to` | integer | No | Message ID this is a reply to. Enables lightweight response polling via `check_responses_available` and `check_responses_observed`. |
+| `image` | string | No | Absolute path to an image (PNG/JPEG/GIF/BMP/TIFF/SVG) rendered inline in the iTerm2 terminal after the message text. Works with any type (e.g., `done` with a screenshot); required when `type=image`. |
 
 #### 📬 MCP `get_messages` Tool
 
@@ -511,6 +514,9 @@ curl "http://localhost:8881/notify/agent?type=done&message=Build%20complete&mode
 # Agent with full context
 curl "http://localhost:8881/notify/agent?type=done&message=Build%20complete&workspaceDir=/Users/user/repos/my-app&agentRole=Coder&agentNumber=2&model=claude-4.6-sonnet"
 
+# Agent with inline image (rendered in iTerm2; image works with any type)
+curl "http://localhost:8881/notify/agent?type=image&message=Generated%20preview&image=/abs/path/to/image.png&model=flux-2-klein-4b"
+
 # App notification
 curl "http://localhost:8881/notify/app?type=success&message=Build%20complete&app=webpack"
 
@@ -525,7 +531,7 @@ curl "http://localhost:8881/notify/app?type=debug&message=Cache%20hit%20ratio%20
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `type` | Yes | Notification type (question, permission, done, error, status, waiting, review, message) |
+| `type` | Yes | Notification type (question, permission, done, error, status, waiting, review, message, image) |
 | `message` | Yes | Message text |
 | `model` | Yes | Exact model identifier (e.g., "claude-4.6-opus-high") |
 | `workspaceDir` | No | Full workspace path (project name derived from last segment) |
@@ -534,6 +540,7 @@ curl "http://localhost:8881/notify/app?type=debug&message=Cache%20hit%20ratio%20
 | `voice` | No | TTS voice override |
 | `to` | No | Recipient agent role/name (for agent conversations, display/filtering only) |
 | `response_to` | No | Message ID this is a reply to. Enables lightweight response polling. |
+| `image` | No | Absolute path to an image rendered inline in the iTerm2 terminal after the message text. Works with any type (e.g., `done` with a screenshot); required when `type=image`. |
 
 #### 📦 `/notify/app` Parameters
 

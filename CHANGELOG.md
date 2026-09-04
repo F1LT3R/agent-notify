@@ -28,6 +28,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `GET /push/vapid-key`, `POST /push/subscribe`, `POST /push/unsubscribe` endpoints
 - VAPID keys auto-generated on first run, persisted to store directory
 - Requires `localhost` or HTTPS (e.g., Cloudflare Tunnel) — LAN IPs don't support push
+- `image` notification type (🖼️, bright magenta) — renders images inline in the iTerm2 terminal via the `iterm2-image` package
+- `image` parameter on `/notify/agent` — absolute image path rendered after the message text; works with any type (e.g., `done` with a screenshot); required when `type=image`
+- CLI flag `--image path` for the `notify` command
+- Image link (`🔗`, clickable OSC 8) printed under every rendered image
 
 ### Changed
 
@@ -36,3 +40,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Mute labels updated: "Audio muted" / "Audio unmuted" (was "Agent messages muted")
 - `--log-level` and `--log-level-audio` now only control audio threshold — console always shows all app messages including trace/debug
 - All app messages are always stored and broadcast to web UI regardless of log level
+- Removed faint ANSI style from console message text and store link — brighter default output
+- Web push no longer fires on trace/debug messages
+- Mute/skip/audio-stop no longer write control bookkeeping messages to the store
