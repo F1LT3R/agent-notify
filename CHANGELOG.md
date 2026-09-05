@@ -35,6 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Planning files moved from tracked `.plans/` to local-only `prompts/` (gitignored)
 - Replace deprecated `apple-mobile-web-app-capable` meta tag with `mobile-web-app-capable`
 - Mute (M key / `/controls/mute`) now silences all audio — agents and apps, all types
 - Mute labels updated: "Audio muted" / "Audio unmuted" (was "Agent messages muted")

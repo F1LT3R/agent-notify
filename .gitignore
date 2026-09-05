@@ -12,3 +12,6 @@ node_modules/
 
 # Pi agent state — session backups untracked by default; opt-in via manual .gitignore removal
 .pi/
+
+# Planning files — local only, moved from tracked .plans/
+prompts/
