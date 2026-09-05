@@ -9,3 +9,6 @@ node_modules/
 .message-store.jsonl.meta
 .message-store.jsonl.pre-start.*
 .agent-notify/
+
+# Pi agent state — session backups untracked by default; opt-in via manual .gitignore removal
+.pi/
