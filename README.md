@@ -19,7 +19,7 @@
   - [🔗 Notification Links (App Only)](#notification-links-app-only)
 - [🚀 Usage](#usage)
   - [💻 Command Line Interface](#command-line-interface)
-  - [🔌 MCP Integration (Cursor AI)](#mcp-integration-cursor-ai)
+  - [🔌 MCP Integration](#mcp-integration)
   - [🌐 HTTP API](#http-api)
   - [⚙️ Programmatic Usage](#programmatic-usage)
 - [📦 App Notifications](#app-notifications)
@@ -55,7 +55,7 @@
 - 🎙️ **Multi-Agent Voice System** - Distinct TTS voices per agent role or number
 - 📂 **Project Identification** - Identifies which project/workspace a notification came from
 - 🎨 **Visual Feedback** - Clean console output with emoji-led metadata and dim message text
-- 🔌 **MCP Integration** - Works seamlessly with Cursor AI and other MCP-compatible tools
+- 🔌 **MCP Integration** - Works with any MCP-compatible client (Pi, Cursor, Claude Code, …)
 - 📦 **App Notifications** - Build tools, CI scripts, and deploy pipelines can fire notifications
 - 🔄 **Notification Queue** - Sequential playback — notifications never overlap
 - 💬 **Message Stream** - Persistent message store with incremental polling and playback tracking
@@ -165,9 +165,9 @@ AGENT_NOTIFY_URL="http://192.168.0.6:8881" notify done "Task complete"
 echo 'export AGENT_NOTIFY_URL="http://192.168.0.6:8881"' >> ~/.bashrc
 ```
 
-#### For MCP (Cursor) Usage
+#### For MCP Usage
 
-Add the `env` block to your Cursor `settings.json`:
+Any MCP client config can pass the server address via an `env` block:
 
 ```json
 {
@@ -291,11 +291,25 @@ notify debug "Cache hit ratio 95%" --app webpack
 | `--detail` | `detail` | Short context info, e.g. file path or count (app notifications only) |
 | `--link` | `url` | Attach a clickable link to app notification (app notifications only, not spoken) |
 
-<a id="mcp-integration-cursor-ai"></a>
+<a id="mcp-integration"></a>
 
-### 🔌 MCP Integration (Cursor AI)
+### 🔌 MCP Integration
 
-Add to your Cursor settings (`settings.json`):
+**Pi (built-in MCP)** — add to `~/.pi/agent/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "agent-notify": {
+      "command": "notify-mcp",
+      "description": "Audio/TTS notifications and the agent-notify message stream (backend daemon on localhost:8881)",
+      "exposure": "direct"
+    }
+  }
+}
+```
+
+**Any other MCP client** — add the server to your client's `mcpServers` config:
 
 ```json
 {
@@ -307,11 +321,7 @@ Add to your Cursor settings (`settings.json`):
 }
 ```
 
-Then configure the notification rules:
-
-**Option 1: Project-specific** - Copy the rules from [`.cursorrules`](.cursorrules) to your project's `.cursorrules` file
-
-**Option 2: Global** - Add the rules from [`.cursorrules`](.cursorrules) globally in: `Settings > Rules & Commands > Add` to use across all projects
+The full notification policy (when to notify, cadence, turn-taking protocol) lives in the Pi `notify` skill; the `notify` tool's own description carries the core contract for every client.
 
 #### 📝 MCP Tool Schema
 
@@ -342,7 +352,7 @@ mcp_agent-notify_notify({
 | `agentRole` | string | No | Agent role name assigned by orchestrator (e.g., "Coder", "Reviewer"). The orchestrator itself should use "Orchestrator". |
 | `agentNumber` | integer | No | Agent number assigned by orchestrator. Orchestrator = 0, subagents = 1, 2, 3, etc. |
 | `voice` | string | No | Override the TTS voice for this notification. If omitted, the server selects a voice based on agentRole or agentNumber. |
-| `model` | string | Yes | Your exact model identifier as shown in system info (e.g., "claude-4.6-opus-high", "gpt-4o-2025-03"). Console log only. |
+| `model` | string | Yes | Your exact model identifier, freshly read this session — never a cached or remembered value. Console log only. Local convention: a model name with its context size appended (e.g., "qwen-3.8b-256k" = 256k context) that may look unusual compared to public model names — use it verbatim, never substitute or "correct" it. |
 | `to` | string | No | Agent role or name this message is directed to (e.g., "Reviewer", "Coder"). Used for agent-to-agent conversations. Display/filtering only — does not route messages. |
 | `response_to` | integer | No | Message ID this is a reply to. Enables lightweight response polling via `check_responses_available` and `check_responses_observed`. |
 | `image` | string | No | Absolute path to an image (PNG/JPEG/GIF/BMP/TIFF/SVG) rendered inline in the iTerm2 terminal after the message text. Works with any type (e.g., `done` with a screenshot); required when `type=image`. |
@@ -757,7 +767,7 @@ When multiple notifications arrive simultaneously (from parallel agents, apps, o
 
 ## 🪟 Multi-Window & Multi-Agent Support
 
-When running multiple Cursor windows and parallel agents, the notification system identifies the source of each notification through project name, agent role, and agent number.
+When running multiple terminal windows and parallel agents, the notification system identifies the source of each notification through project name, agent role, and agent number.
 
 <a id="console-log-format"></a>
 
@@ -908,7 +918,7 @@ The orchestrator creates audio conversations by sending `notify` on behalf of di
 - Sends `notify` using each agent's `agentRole` and `agentNumber`
 - Waits for each message to finish playing before sending the next
 
-Agents *can* independently poll `get_messages` for cross-tool scenarios (e.g., bridging Cursor and Claude Code agents via the shared message stream).
+Agents *can* independently poll `get_messages` for cross-session scenarios (e.g., agents in separate sessions or windows via the shared message stream).
 
 <a id="turn-taking-protocol"></a>
 

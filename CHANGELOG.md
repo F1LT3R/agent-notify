@@ -44,3 +44,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Removed faint ANSI style from console message text and store link — brighter default output
 - Web push no longer fires on trace/debug messages
 - Mute/skip/audio-stop no longer write control bookkeeping messages to the store
+- MCP: moved the notification contract into the `notify` tool description (all clients); neutralized Cursor-specific MCP docs
