@@ -14,4 +14,6 @@ node_modules/
 .pi/
 
 # Planning files — local only, moved from tracked .plans/
-prompts/
+.prompts/
+.worktrees/
+.tmp/
